@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Meal Recommender</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <h1>🍱 오늘의 음식 추천</h1>
+  <div id="today-meal"></div>
+
+  <div id="search-bar">
+    <input type="text" id="searchInput" placeholder="음식 이름을 입력하세요" />
+    <button onclick="searchMeals()">검색</button>
+    <button onclick="pickRandomMeal()">랜덤 추천</button>
+  </div>
+
+  <h2>전체 음식 목록</h2>
+  <div id="meal-list" class="grid"></div>
+
+  <div id="modal" class="hidden">
+    <div id="modal-content"></div>
+    <button onclick="closeModal()">닫기</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
