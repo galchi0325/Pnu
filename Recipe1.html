@@ -169,7 +169,7 @@
   <main>
     <section>
       <h2 class="section-title">🥘 오늘의 추천 레시피</h2>
-      <div id="today-meal"></div>
+      <div id="today-meal" class="meal"></div>
       <button onclick="pickRandomMeal()">🎲 랜덤 추천</button>
     </section>
 
@@ -207,6 +207,8 @@
     const todayMealDiv = document.getElementById("today-meal");
     const modal = document.getElementById("modal");
     const modalContent = document.getElementById("modal-content");
+
+    let currentRandomMeal = null; // 전역 변수로 저장
 
     function getFavorites() {
       return JSON.parse(localStorage.getItem("favorites") || "[]");
@@ -305,7 +307,6 @@
       }
       saveFavorites(favs);
       loadFavorites();
-      showTodayMeal();
     }
 
     function isFavorite(id) {
@@ -313,29 +314,15 @@
       return favs.includes(id);
     }
 
-    async function showTodayMeal() {
-      const today = new Date().toDateString();
-      const savedDate = localStorage.getItem("lastDate");
-      let mealId = localStorage.getItem("todayMeal");
+    async function pickRandomMeal() {
+      const res = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
+      const meal = (await res.json()).meals[0];
+      currentRandomMeal = meal; // 저장
 
-      if (today !== savedDate) {
-        const favs = getFavorites();
-        if (favs.length > 0) {
-          mealId = favs[Math.floor(Math.random() * favs.length)];
-          localStorage.setItem("todayMeal", mealId);
-          localStorage.setItem("lastDate", today);
-        }
-      }
-
-      if (mealId) {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
-        const meal = (await res.json()).meals[0];
-        todayMealDiv.innerHTML = `
-          <img src="${meal.strMealThumb}" width="300" style="cursor: pointer; border-radius: 10px;" onclick="showDetails(${meal.idMeal})" />
-        `;
-      } else {
-        todayMealDiv.innerHTML = "<p>좋아요한 레시피가 없습니다.</p>";
-      }
+      todayMealDiv.innerHTML = `
+        <img src="${meal.strMealThumb}" alt="${meal.strMeal}" style="width: 100%; max-width: 300px; border-radius: 10px; cursor: pointer;" onclick="showDetails(${meal.idMeal})" />
+        <h3>${meal.strMeal}</h3>
+      `;
     }
 
     async function loadFavorites() {
@@ -350,19 +337,8 @@
       }
     }
 
-    function pickRandomMeal() {
-      const favs = getFavorites();
-      if (favs.length === 0) {
-        alert("즐겨찾기한 레시피가 없습니다.");
-        return;
-      }
-      const randomMeal = favs[Math.floor(Math.random() * favs.length)];
-      showDetails(randomMeal);
-    }
-
     loadCategories();
     loadFavorites();
-    showTodayMeal();
   </script>
 </body>
 
