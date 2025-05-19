@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>즐겨찾기한 레시피</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #fffdfa;
+      padding: 20px;
+      color: #333;
+    }
+    h1 {
+      color: #ffb84d;
+      margin-bottom: 10px;
+    }
+    button.back {
+      background-color: #ffb84d;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .meal {
+      width: 200px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      background-color: #fff;
+    }
+    .meal img {
+      width: 100%;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .favorite {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: red;
+    }
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    #modal {
+      position: fixed;
+      top: 20%;
+      left: 20%;
+      background: white;
+      border: 1px solid black;
+      padding: 20px;
+      z-index: 10;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>❤ 즐겨찾기한 레시피</h1>
+  <button class="back" onclick="location.href='index.html'">← 돌아가기</button>
+  <div id="favorite-list" class="grid"></div>
+
+  <div id="modal" class="hidden">
+    <div id="modal-content"></div>
+    <button onclick="closeModal()">닫기</button>
+  </div>
+
+  <script>
+    const favContainer = document.getElementById("favorite-list");
+    const modal = document.getElementById("modal");
+    const modalContent = document.getElementById("modal-content");
+
+    function getFavorites() {
+      return JSON.parse(localStorage.getItem("favorites") || "[]");
+    }
+
+    async function loadFavorites() {
+      const favs = getFavorites();
+      favContainer.innerHTML = "";
+
+      if (favs.length === 0) {
+        favContainer.innerHTML = "<p>즐겨찾기한 레시피가 없습니다.</p>";
+        return;
+      }
+
+      for (let id of favs) {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+        const meal = (await res.json()).meals[0];
+        displayMeal(밥);
+      }
+    }
+
+    function displayMeal(밥) {
+      const div = document.createElement("div");
+      div.className = "meal";
+      div.innerHTML = `
+        <img src="${meal.strMealThumb}" alt="${meal.strMeal}" onclick="showDetails(${meal.idMeal})" />
+        <h3>${meal.strMeal}</h3>
+        <button class="favorite" onclick="toggleFavorite(${meal.idMeal})">❤</button>
+      `;
+      favContainer.appendChild(div);
+    }
+
+    function toggleFavorite(id) {
+      let favs = getFavorites();
+      const index = favs.indexOf(id);
+      if (index > -1) favs.splice(index, 1);
+      localStorage.setItem("favorites", JSON.stringify(favs));
+      loadFavorites(); // 다시 그리기
+    }
+
+    async function showDetails(id) {
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+      const meal = (await res.json()).meals[0];
+      modalContent.innerHTML = `
+        <h2>${meal.strMeal}</h2>
+        <img src="${meal.strMealThumb}" width="200" />
+        <p><strong>Ingredients:</strong></p>
+        <ul>
+          ${[...Array(20).keys()]
+            .map(i => meal[`strIngredient${i+1}`] ? `<li>${meal[`strIngredient${i+1}`]} - ${meal[`strMeasure${i+1}`]}</li>` : '')
+            .join('')}
+        </ul>
+      `;
+      modal.classList.remove("hidden");
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+    }
+
+    // 바깥 클릭 시 모달 닫기
+    window.addEventListener("click", function(e) {
+      if (e.target === modal) closeModal();
+    });
+
+    loadFavorites();
+  </script>
+</body>
+</html>
+
