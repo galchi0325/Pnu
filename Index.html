@@ -138,12 +138,16 @@
     <section>
       <h2 class="section-title">📋 전체 음식 목록</h2>
       <div id="meal-list" class="grid"></div>
+      <div id="pagination" style="margin-top:20px; text-align:center;"></div>
     </section>
-
+    
+    <!--
     <section>
       <h2 class="section-title">❤ 즐겨찾기한 레시피</h2>
       <div id="favorite-list" class="grid"></div>
     </section>
+    -->
+
   </main>
 
   <div id="modal" class="hidden">
@@ -344,9 +348,70 @@ window.showDetails = async function(id) {
   `;
   modal.classList.remove("hidden");
 };
+let allMeals = [];
+let currentPage = 1;
+const itemsPerPage = 16;
 
+async function fetchAllMeals() {
+  const res = await fetch("https://www.themealdb.com/api/json/v1/1/search.php?s=");
+  const data = await res.json();
+  allMeals = data.meals;
+  renderMeals();
+  renderPagination();
+}
 
+function renderMeals() {
+  mealList.innerHTML = "";
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const mealsToShow = allMeals.slice(start, end);
+  mealsToShow.forEach(meal => {
+    displayMeal(meal, mealList);
+  });
+}
 
+function renderPagination() {
+  const totalPages = Math.ceil(allMeals.length / itemsPerPage);
+  const pagination = document.getElementById("pagination");
+  pagination.innerHTML = "";
+
+  if (currentPage > 1) {
+    const prev = document.createElement("button");
+    prev.textContent = "이전";
+    prev.onclick = () => {
+      currentPage--;
+      renderMeals();
+      renderPagination();
+    };
+    pagination.appendChild(prev);
+  }
+
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    btn.style.margin = "0 5px";
+    btn.style.fontWeight = i === currentPage ? "bold" : "normal";
+    btn.onclick = () => {
+      currentPage = i;
+      renderMeals();
+      renderPagination();
+    };
+    pagination.appendChild(btn);
+  }
+
+  if (currentPage < totalPages) {
+    const next = document.createElement("button");
+    next.textContent = "다음";
+    next.onclick = () => {
+      currentPage++;
+      renderMeals();
+      renderPagination();
+    };
+    pagination.appendChild(next);
+  }
+}
+
+fetchAllMeals();
     // 초기 실행
     loadCategories();
     loadFavorites();
