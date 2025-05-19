@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,25 +19,12 @@
       padding: 20px;
       text-align: center;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      position: relative;
     }
 
     header h1 {
       margin: 0;
       font-size: 2.5rem;
       color: #fff;
-    }
-
-    #favorite-btn {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background-color: white;
-      border: 2px solid #ffb84d;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 16px;
-      cursor: pointer;
     }
 
     main {
@@ -137,19 +125,53 @@
     .hidden {
       display: none;
     }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2rem;
+      }
+
+      .meal {
+        width: 150px;
+      }
+
+      #ingredient-search input {
+        width: 100%;
+      }
+
+      #ingredient-search button {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .grid {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #modal {
+        top: 10%;
+        left: 5%;
+        width: 90%;
+        max-height: 80vh;
+      }
+    }
   </style>
 </head>
+
 <body>
   <header>
     <h1>오늘 뭐 먹지?</h1>
-    <button id="favorite-btn" onclick="openFavoriteWindow()">❤️ 즐겨찾기</button>
   </header>
+
   <main>
     <section>
       <h2 class="section-title">🥘 오늘의 추천 레시피</h2>
       <div id="today-meal"></div>
       <button onclick="pickRandomMeal()">🎲 랜덤 추천</button>
     </section>
+
     <section>
       <h2 class="section-title">🔍 재료로 레시피 찾기</h2>
       <div id="ingredient-search">
@@ -157,55 +179,221 @@
         <button onclick="searchByIngredient()">재료로 찾기</button>
       </div>
     </section>
+
     <section>
       <h2 class="section-title">📂 카테고리별 보기</h2>
       <div id="category-buttons" class="grid"></div>
     </section>
+
     <section>
       <h2 class="section-title">📋 전체 음식 목록</h2>
       <div id="meal-list" class="grid"></div>
     </section>
+
+    <section>
+      <h2 class="section-title">❤️ 즐겨찾기한 레시피</h2>
+      <div id="favorite-list" class="grid"></div>
+    </section>
   </main>
+
   <div id="modal" class="hidden">
     <div id="modal-content"></div>
     <button onclick="closeModal()">닫기</button>
   </div>
+
   <script>
+    const mealList = document.getElementById("meal-list");
+    const todayMealDiv = document.getElementById("today-meal");
+    const modal = document.getElementById("modal");
+    const modalContent = document.getElementById("modal-content");
+
     function getFavorites() {
       return JSON.parse(localStorage.getItem("favorites") || "[]");
     }
 
-    function openFavoriteWindow() {
-      const favWindow = window.open("", "즐겨찾기 레시피", "width=600,height=600");
-      const favs = getFavorites();
-      if (favs.length === 0) {
-        favWindow.document.write("<p>즐겨찾기한 레시피가 없습니다.</p>");
+    function saveFavorites(favs) {
+      localStorage.setItem("favorites", JSON.stringify(favs));
+    }
+
+    async function loadCategories() {
+      const res = await fetch("https://www.themealdb.com/api/json/v1/1/categories.php");
+      const data = await res.json();
+      const container = document.getElementById("category-buttons");
+
+      data.categories.forEach((cat) => {
+        const btn = document.createElement("button");
+        btn.className = "category-button";
+        btn.textContent = cat.strCategory;
+        btn.onclick = () => fetchMealsByCategory(cat.strCategory);
+        container.appendChild(btn);
+      });
+    }
+
+    async function fetchMealsByCategory(category) {
+      const res = await fetch(
+        `https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`
+      );
+      const data = await res.json();
+      mealList.innerHTML = "";
+      for (let item of data.meals) {
+        const mealData = await fetch(
+          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.idMeal}`
+        );
+        const meal = (await mealData.json()).meals[0];
+        displayMeal(meal, mealList);
+      }
+    }
+
+    async function searchByIngredient() {
+      const input = document.getElementById("ingredientInput").value.trim();
+      if (!input) {
+        alert("재료를 입력해주세요!");
         return;
       }
-      favWindow.document.write('<h2>❤️ 즐겨찾기 레시피</h2><div id="favorite-container"></div><script>' +
-        'async function fetchMeal(id) {' +
-        '  const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);' +
-        '  const meal = (await res.json()).meals[0];' +
-        '  const div = document.createElement("div");' +
-        '  div.innerHTML = `<img src="${meal.strMealThumb}" alt="${meal.strMeal}" style="width: 100px; cursor: pointer;" onclick="showDetails(${meal.idMeal})"/><p>${meal.strMeal}</p>`;' +
-        '  document.getElementById("favorite-container").appendChild(div);' +
-        '}' +
-        'function showDetails(id) {' +
-        '  fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`)' +
-        '    .then(res => res.json())' +
-        '    .then(data => {' +
-        '      const meal = data.meals[0];' +
-        '      const ingredients = Array.from({ length: 20 }, (_, i) => {' +
-        '        const ing = meal[`strIngredient${i + 1}`];' +
-        '        const meas = meal[`strMeasure${i + 1}`];' +
-        '        return ing ? `<li>${ing} - ${meas}</li>` : "";' +
-        '      }).join("");' +
-        '      alert(`재료 목록:\n${ingredients.replace(/<[^>]*>/g, "")}`);' +
-        '    });' +
-        '}' +
-        'const favs = ' + JSON.stringify(favs) + ';' +
-        'favs.forEach(fetchMeal);</script>');
+      const res = await fetch(
+        `https://www.themealdb.com/api/json/v1/1/filter.php?i=${input}`
+      );
+      const data = await res.json();
+      mealList.innerHTML = "";
+      if (!data.meals) {
+        mealList.innerHTML = "<p>해당 재료로 만든 음식을 찾을 수 없습니다.</p>";
+        return;
+      }
+      for (let item of data.meals) {
+        const mealData = await fetch(
+          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.idMeal}`
+        );
+        const meal = (await mealData.json()).meals[0];
+        displayMeal(meal, mealList);
+      }
     }
+
+    function displayMeal(meal, target) {
+      const div = document.createElement("div");
+      div.className = "meal";
+      div.innerHTML = `
+        <img src="${meal.strMealThumb}" onclick="showDetails(${meal.idMeal})" alt="${meal.strMeal}" />
+        <h3>${meal.strMeal}</h3>
+        <button class="favorite" onclick="toggleFavorite(${meal.idMeal})">
+          ${isFavorite(meal.idMeal) ? "❤️" : "🤍"}
+        </button>
+      `;
+      target.appendChild(div);
+    }
+
+    async function showDetails(id) {
+      const res = await fetch(
+        `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
+      );
+      const meal = (await res.json()).meals[0];
+      modalContent.innerHTML = `
+        <h2>${meal.strMeal}</h2>
+        <img src="${meal.strMealThumb}" width="200" alt="${meal.strMeal}" />
+        <p><strong>Ingredients:</strong></p>
+        <ul>
+          ${[...Array(20).keys()]
+            .map(
+              (i) =>
+                meal[`strIngredient${i + 1}`]
+                  ? `<li>${meal[`strIngredient${i + 1}`]} - ${meal[`strMeasure${i + 1}`]}</li>`
+                  : ""
+            )
+            .join("")}
+        </ul>
+        <p><strong>Instructions:</strong></p>
+        <p>${meal.strInstructions}</p>
+      `;
+      modal.classList.remove("hidden");
+    }
+
+    function closeModal() {
+      modal.classList.add("hidden");
+    }
+
+    function toggleFavorite(id) {
+      let favs = getFavorites();
+      if (favs.includes(id)) {
+        favs = favs.filter((x) => x !== id);
+      } else {
+        favs.push(id);
+      }
+      saveFavorites(favs);
+      loadFavorites();
+      showTodayMeal();
+    }
+
+    function isFavorite(id) {
+      const favs = getFavorites();
+      return favs.includes(id);
+    }
+
+    async function showTodayMeal() {
+      const today = new Date().toDateString();
+      const savedDate = localStorage.getItem("lastDate");
+      let mealId = localStorage.getItem("todayMeal");
+
+      if (today !== savedDate) {
+        const favs = getFavorites();
+        if (favs.length > 0) {
+          mealId = favs[Math.floor(Math.random() * favs.length)];
+          localStorage.setItem("todayMeal", mealId);
+          localStorage.setItem("lastDate", today);
+        }
+      }
+
+      if (mealId) {
+        const res = await fetch(
+          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`
+        );
+        const meal = (await res.json()).meals[0];
+        todayMealDiv.innerHTML = `
+          <img src="${meal.strMealThumb}" alt="${meal.strMeal}" style="width: 100%; max-width: 300px; border-radius: 10px; cursor: pointer;" onclick="showDetails(${meal.idMeal})" />
+          <h3>${meal.strMeal}</h3>
+        `;
+      } else {
+        todayMealDiv.innerHTML = "<p>좋아요한 레시피가 없습니다.</p>";
+      }
+    }
+
+    async function loadFavorites() {
+      const favs = getFavorites();
+      const favContainer = document.getElementById("favorite-list");
+      favContainer.innerHTML = "";
+
+      for (let id of favs) {
+        const res = await fetch(
+          `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
+        );
+        const meal = (await res.json()).meals[0];
+        displayMeal(meal, favContainer);
+      }
+    }
+
+    // 🎲 랜덤 추천 → 즐겨찾기 기반 추천 (버튼 이름 유지)
+    async function pickRandomMeal() {
+      const favs = getFavorites();
+      if (favs.length === 0) {
+        alert("즐겨찾기한 레시피가 없습니다.");
+        return;
+      }
+
+      const randomId = favs[Math.floor(Math.random() * favs.length)];
+      const res = await fetch(
+        `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${randomId}`
+      );
+      const meal = (await res.json()).meals[0];
+
+      todayMealDiv.innerHTML = `
+        <img src="${meal.strMealThumb}" alt="${meal.strMeal}" style="width: 100%; max-width: 300px; border-radius: 10px; cursor: pointer;" onclick="showDetails(${meal.idMeal})" />
+        <h3>${meal.strMeal}</h3>
+      `;
+    }
+
+    // 초기 실행
+    loadCategories();
+    loadFavorites();
+    showTodayMeal();
   </script>
 </body>
+
 </html>
