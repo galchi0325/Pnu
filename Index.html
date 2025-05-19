@@ -378,56 +378,69 @@ async function fetchAllMeals() {
 }
 
 function renderMeals() {
-  mealList.innerHTML = "";
-  const start = (currentPage - 1) * itemsPerPage;
-  const end = start + itemsPerPage;
-  const mealsToShow = allMeals.slice(start, end);
-  mealsToShow.forEach(meal => {
-    displayMeal(meal, mealList);
-  });
+  mealList.innerHTML = "";
+
+  if (allMeals.length <= itemsPerPage) {
+    allMeals.forEach(meal => {
+      displayMeal(meal, mealList);
+    });
+  } else {
+    const start = (currentPage - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    const mealsToShow = allMeals.slice(start, end);
+    mealsToShow.forEach(meal => {
+      displayMeal(meal, mealList);
+    });
+  }
 }
 
 function renderPagination() {
-  const totalPages = Math.ceil(allMeals.length / itemsPerPage);
-  const pagination = document.getElementById("pagination");
-  pagination.innerHTML = "";
+  const pagination = document.getElementById("pagination");
+  pagination.innerHTML = "";
 
-  if (currentPage > 1) {
-    const prev = document.createElement("button");
-    prev.textContent = "이전";
-    prev.onclick = () => {
-      currentPage--;
-      renderMeals();
-      renderPagination();
-    };
-    pagination.appendChild(prev);
-  }
+  // 16개 이하이면 pagination 없음
+  if (allMeals.length <= itemsPerPage) return;
 
-  for (let i = 1; i <= totalPages; i++) {
-    const btn = document.createElement("button");
-    btn.textContent = i;
-    btn.style.margin = "0 5px";
-    btn.style.fontWeight = i === currentPage ? "bold" : "normal";
-    btn.onclick = () => {
-      currentPage = i;
-      renderMeals();
-      renderPagination();
-    };
-    pagination.appendChild(btn);
-  }
+  const totalPages = Math.ceil(allMeals.length / itemsPerPage);
 
-  if (currentPage < totalPages) {
-    const next = document.createElement("button");
-    next.textContent = "다음";
-    next.onclick = () => {
-      currentPage++;
-      renderMeals();
-      renderPagination();
-    };
-    pagination.appendChild(next);
-  }
+  if (currentPage > 1) {
+    const prev = document.createElement("button");
+    prev.textContent = "이전";
+    prev.onclick = () => {
+      currentPage--;
+      renderMeals();
+      renderPagination();
+    };
+    pagination.appendChild(prev);
+  }
+
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    btn.style.margin = "0 5px";
+    btn.style.fontWeight = i === currentPage ? "bold" : "normal";
+    btn.onclick = () => {
+      currentPage = i;
+      renderMeals();
+      renderPagination();
+    };
+    pagination.appendChild(btn);
+  }
+
+  if (currentPage < totalPages) {
+    const next = document.createElement("button");
+    next.textContent = "다음";
+    next.onclick = () => {
+      currentPage++;
+      renderMeals();
+      renderPagination();
+    };
+    pagination.appendChild(next);
+  }
 }
 
+
+  
 fetchAllMeals();
     // 초기 실행
     loadCategories();
