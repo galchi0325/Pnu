@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>오늘 뭐 먹지?</title>
   <style>
     body {
@@ -66,6 +67,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
+      justify-content: center;
     }
 
     .meal {
@@ -75,6 +77,7 @@
       padding: 10px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       background-color: #fff;
+      text-align: center;
     }
 
     .meal img {
@@ -88,6 +91,7 @@
       border: none;
       font-size: 20px;
       cursor: pointer;
+      margin-top: 10px;
     }
 
     .category-button {
@@ -117,6 +121,31 @@
 
     .hidden {
       display: none;
+    }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 2rem;
+      }
+
+      .meal {
+        width: 150px;
+      }
+
+      #ingredient-search input {
+        width: 100%;
+      }
+
+      #ingredient-search button {
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      .grid {
+        flex-direction: column;
+        align-items: center;
+      }
     }
   </style>
 </head>
@@ -250,6 +279,8 @@
             .map(i => meal[`strIngredient${i+1}`] ? `<li>${meal[`strIngredient${i+1}`]} - ${meal[`strMeasure${i+1}`]}</li>` : '')
             .join('')}
         </ul>
+        <p><strong>Instructions:</strong></p>
+        <p>${meal.strInstructions}</p>
       `;
       modal.classList.remove("hidden");
     }
@@ -284,24 +315,20 @@
         const favs = getFavorites();
         if (favs.length > 0) {
           mealId = favs[Math.floor(Math.random() * favs.length)];
-        } else {
-          const res = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
-          const meal = (await res.json()).meals[0];
-          mealId = meal.idMeal;
+          localStorage.setItem("todayMeal", mealId);
+          localStorage.setItem("lastDate", today);
         }
-        localStorage.setItem("todayMeal", mealId);
-        localStorage.setItem("lastDate", today);
       }
 
       if (mealId) {
         const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
         const meal = (await res.json()).meals[0];
         todayMealDiv.innerHTML = `
-          <h3>${meal.strMeal}</h3>
+          <h2>${meal.strMeal}</h2>
           <img src="${meal.strMealThumb}" width="200" />
         `;
       } else {
-        todayMealDiv.innerHTML = "<p>추천할 레시피가 없습니다.</p>";
+        todayMealDiv.innerHTML = "<p>좋아요한 레시피가 없습니다.</p>";
       }
     }
 
@@ -309,6 +336,7 @@
       const favs = getFavorites();
       const favContainer = document.getElementById("favorite-list");
       favContainer.innerHTML = "";
+
       for (let id of favs) {
         const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
         const meal = (await res.json()).meals[0];
@@ -316,23 +344,25 @@
       }
     }
 
-    async function pickRandomMeal() {
-      const res = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
-      const meal = (await res.json()).meals[0];
-      todayMealDiv.innerHTML = `
-        <h3>${meal.strMeal}</h3>
-        <img src="${meal.strMealThumb}" width="200" />
-      `;
+    // 랜덤 추천
+    function pickRandomMeal() {
+      const favs = getFavorites();
+      if (favs.length === 0) {
+        alert("즐겨찾기한 레시피가 없습니다.");
+        return;
+      }
+      const randomMeal = favs[Math.floor(Math.random() * favs.length)];
+      showDetails(randomMeal);
     }
 
-    window.onload = () => {
-      loadCategories();
-      loadFavorites();
-      showTodayMeal();
-    }
+    // 초기 실행
+    loadCategories();
+    loadFavorites();
+    showTodayMeal();
 
   </script>
 
 </body>
 
 </html>
+
