@@ -164,7 +164,6 @@
       const res = await fetch("https://www.themealdb.com/api/json/v1/1/categories.php");
       const data = await res.json();
       const container = document.getElementById("category-buttons");
-
       data.categories.forEach(cat => {
         const btn = document.createElement("button");
         btn.className = "category-button";
@@ -240,5 +239,70 @@
 
     function toggleFavorite(id) {
       let favs = getFavorites();
-      const idStr = id.toString();
-      if (favs.includes(idStr))
+      id = id.toString();
+      if (favs.includes(id)) {
+        favs = favs.filter(x => x !== id);
+      } else {
+        favs.push(id);
+      }
+      saveFavorites(favs);
+      loadFavorites();
+      showTodayMeal();
+    }
+
+    function isFavorite(id) {
+      const favs = getFavorites();
+      return favs.includes(id.toString());
+    }
+
+    async function showTodayMeal() {
+      const today = new Date().toDateString();
+      const savedDate = localStorage.getItem("lastDate");
+      let mealId = localStorage.getItem("todayMeal");
+      if (today !== savedDate) {
+        const favs = getFavorites();
+        if (favs.length > 0) {
+          mealId = favs[Math.floor(Math.random() * favs.length)];
+          localStorage.setItem("todayMeal", mealId);
+          localStorage.setItem("lastDate", today);
+        }
+      }
+      if (mealId) {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
+        const meal = (await res.json()).meals[0];
+        todayMealDiv.innerHTML = `
+          <h3>${meal.strMeal}</h3>
+          <img src="${meal.strMealThumb}" width="200" />
+        `;
+      } else {
+        todayMealDiv.innerHTML = "<p>좋아요한 레시피가 없습니다.</p>";
+      }
+    }
+
+    async function pickRandomMeal() {
+      const res = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
+      const meal = (await res.json()).meals[0];
+      todayMealDiv.innerHTML = `
+        <h3>${meal.strMeal}</h3>
+        <img src="${meal.strMealThumb}" width="200" />
+      `;
+    }
+
+    async function loadFavorites() {
+      const favs = getFavorites();
+      const favContainer = document.getElementById("favorite-list");
+      favContainer.innerHTML = "";
+      for (let id of favs) {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+        const meal = (await res.json()).meals[0];
+        displayMeal(meal, favContainer);
+      }
+    }
+
+    // 초기 실행
+    loadCategories();
+    loadFavorites();
+    showTodayMeal();
+  </script>
+</body>
+</html>
