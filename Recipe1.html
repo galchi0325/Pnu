@@ -1,0 +1,600 @@
+
+
+<!DOCTYPE html>
+
+<html lang="ko">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>오늘 뭐 먹지?</title>
+
+  <style>
+
+    body {
+
+      font-family: 'Segoe UI', sans-serif;
+
+      margin: 0;
+
+      padding: 0;
+
+      background-color: #fffdfa;
+
+      color: #333;
+
+    }
+
+    header {
+
+      background-color: #ffb84d;
+
+      padding: 20px;
+
+      text-align: center;
+
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+    }
+
+    header h1 {
+
+      margin: 0;
+
+      font-size: 2.5rem;
+
+      color: #fff;
+
+    }
+
+    main {
+
+      padding: 20px;
+
+      max-width: 1000px;
+
+      margin: auto;
+
+    }
+
+    section {
+
+      margin-bottom: 40px;
+
+    }
+
+    .section-title {
+
+      font-size: 1.6rem;
+
+      margin-bottom: 10px;
+
+      border-bottom: 2px solid #ffb84d;
+
+      padding-bottom: 5px;
+
+    }
+
+    #ingredient-search input {
+
+      padding: 12px;
+
+      font-size: 18px;
+
+      width: 280px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 4px;
+
+    }
+
+    #ingredient-search button {
+
+      padding: 12px 18px;
+
+      font-size: 18px;
+
+      background-color: #ffb84d;
+
+      color: white;
+
+      border: none;
+
+      border-radius: 4px;
+
+      cursor: pointer;
+
+      margin-left: 5px;
+
+    }
+
+    .grid {
+
+      display: flex;
+
+      flex-wrap: wrap;
+
+      gap: 20px;
+
+    }
+
+    .meal {
+
+      width: 200px;
+
+      border: 1px solid #eee;
+
+      border-radius: 8px;
+
+      padding: 10px;
+
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+      background-color: #fff;
+
+    }
+
+    .meal img {
+
+      width: 100%;
+
+      border-radius: 5px;
+
+      cursor: pointer;
+
+    }
+
+    .favorite {
+
+      background: none;
+
+      border: none;
+
+      font-size: 20px;
+
+      cursor: pointer;
+
+    }
+
+    .category-button {
+
+      padding: 10px 14px;
+
+      font-size: 15px;
+
+      margin: 5px;
+
+      border: 1px solid #ccc;
+
+      border-radius: 5px;
+
+      background-color: white;
+
+      cursor: pointer;
+
+    }
+
+    .category-button:hover {
+
+      background-color: #ffe0b3;
+
+    }
+
+    #modal {
+
+      position: fixed;
+
+      top: 20%;
+
+      left: 20%;
+
+      background: white;
+
+      border: 1px solid black;
+
+      padding: 20px;
+
+      z-index: 10;
+
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+
+    }
+
+    .hidden {
+
+      display: none;
+
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <header>
+
+    <h1>오늘 뭐 먹지?</h1>
+
+  </header>
+
+  <main>
+
+    <section>
+
+      <h2 class="section-title">🥘 오늘의 추천 레시피</h2>
+
+      <div id="today-meal"></div>
+
+    </section>
+
+
+
+    <section>
+
+      <h2 class="section-title">🔍 재료로 레시피 찾기</h2>
+
+      <div id="ingredient-search">
+
+        <input type="text" id="ingredientInput" placeholder="예: chicken, onion">
+
+        <button onclick="searchByIngredient()">재료로 찾기</button>
+
+      </div>
+
+    </section>
+
+
+
+    <section>
+
+      <h2 class="section-title">📂 카테고리별 보기</h2>
+
+      <div id="category-buttons" class="grid"></div>
+
+    </section>
+
+
+
+    <section>
+
+      <h2 class="section-title">📋 전체 음식 목록</h2>
+
+      <div id="meal-list" class="grid"></div>
+
+    </section>
+
+
+
+    <section>
+
+      <h2 class="section-title">❤️ 즐겨찾기한 레시피</h2>
+
+      <div id="favorite-list" class="grid"></div>
+
+    </section>
+
+  </main>
+
+
+
+  <div id="modal" class="hidden">
+
+    <div id="modal-content"></div>
+
+    <button onclick="closeModal()">닫기</button>
+
+  </div>
+
+
+
+  <script>
+
+    const mealList = document.getElementById("meal-list");
+
+    const todayMealDiv = document.getElementById("today-meal");
+
+    const modal = document.getElementById("modal");
+
+    const modalContent = document.getElementById("modal-content");
+
+
+
+    function getFavorites() {
+
+      return JSON.parse(localStorage.getItem("favorites") || "[]");
+
+    }
+
+
+
+    function saveFavorites(favs) {
+
+      localStorage.setItem("favorites", JSON.stringify(favs));
+
+    }
+
+
+
+    async function loadCategories() {
+
+      const res = await fetch("https://www.themealdb.com/api/json/v1/1/categories.php");
+
+      const data = await res.json();
+
+      const container = document.getElementById("category-buttons");
+
+
+
+      data.categories.forEach(cat => {
+
+        const btn = document.createElement("button");
+
+        btn.className = "category-button";
+
+        btn.textContent = cat.strCategory;
+
+        btn.onclick = () => fetchMealsByCategory(cat.strCategory);
+
+        container.appendChild(btn);
+
+      });
+
+    }
+
+
+
+    async function fetchMealsByCategory(category) {
+
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`);
+
+      const data = await res.json();
+
+      mealList.innerHTML = "";
+
+      for (let item of data.meals) {
+
+        const mealData = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.idMeal}`);
+
+        const meal = (await mealData.json()).meals[0];
+
+        displayMeal(meal, mealList);
+
+      }
+
+    }
+
+
+
+    async function searchByIngredient() {
+
+      const input = document.getElementById("ingredientInput").value.trim();
+
+      if (!input) {
+
+        alert("재료를 입력해주세요!");
+
+        return;
+
+      }
+
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${input}`);
+
+      const data = await res.json();
+
+      mealList.innerHTML = "";
+
+      if (!data.meals) {
+
+        mealList.innerHTML = "<p>해당 재료로 만든 음식을 찾을 수 없습니다.</p>";
+
+        return;
+
+      }
+
+      for (let item of data.meals) {
+
+        const mealData = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.idMeal}`);
+
+        const meal = (await mealData.json()).meals[0];
+
+        displayMeal(meal, mealList);
+
+      }
+
+    }
+
+
+
+    function displayMeal(meal, target) {
+
+      const div = document.createElement("div");
+
+      div.className = "meal";
+
+      div.innerHTML = `
+
+        <img src="${meal.strMealThumb}" onclick="showDetails(${meal.idMeal})" />
+
+        <h3>${meal.strMeal}</h3>
+
+        <button class="favorite" onclick="toggleFavorite(${meal.idMeal})">
+
+          ${isFavorite(meal.idMeal) ? "❤️" : "🤍"}
+
+        </button>
+
+      `;
+
+      target.appendChild(div);
+
+    }
+
+
+
+    async function showDetails(id) {
+
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+
+      const meal = (await res.json()).meals[0];
+
+      modalContent.innerHTML = `
+
+        <h2>${meal.strMeal}</h2>
+
+        <img src="${meal.strMealThumb}" width="200">
+
+        <p><strong>Ingredients:</strong></p>
+
+        <ul>
+
+          ${[...Array(20).keys()]
+
+            .map(i => meal[`strIngredient${i+1}`] ? `<li>${meal[`strIngredient${i+1}`]} - ${meal[`strMeasure${i+1}`]}</li>` : '')
+
+            .join('')}
+
+        </ul>
+
+      `;
+
+      modal.classList.remove("hidden");
+
+    }
+
+
+
+    function closeModal() {
+
+      modal.classList.add("hidden");
+
+    }
+
+
+
+    function toggleFavorite(id) {
+
+      let favs = getFavorites();
+
+      if (favs.includes(id)) {
+
+        favs = favs.filter(x => x !== id);
+
+      } else {
+
+        favs.push(id);
+
+      }
+
+      saveFavorites(favs);
+
+      loadFavorites();
+
+      showTodayMeal();
+
+    }
+
+
+
+    function isFavorite(id) {
+
+      const favs = getFavorites();
+
+      return favs.includes(id);
+
+    }
+
+
+
+    async function showTodayMeal() {
+
+      const today = new Date().toDateString();
+
+      const savedDate = localStorage.getItem("lastDate");
+
+      let mealId = localStorage.getItem("todayMeal");
+
+
+
+      if (today !== savedDate) {
+
+        const favs = getFavorites();
+
+        if (favs.length > 0) {
+
+          mealId = favs[Math.floor(Math.random() * favs.length)];
+
+          localStorage.setItem("todayMeal", mealId);
+
+          localStorage.setItem("lastDate", today);
+
+        }
+
+      }
+
+
+
+      if (mealId) {
+
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
+
+        const meal = (await res.json()).meals[0];
+
+        todayMealDiv.innerHTML = `
+
+          <h2>${meal.strMeal}</h2>
+
+          <img src="${meal.strMealThumb}" width="200" />
+
+        `;
+
+      } else {
+
+        todayMealDiv.innerHTML = "<p>좋아요한 레시피가 없습니다.</p>";
+
+      }
+
+    }
+
+
+
+    async function loadFavorites() {
+
+      const favs = getFavorites();
+
+      const favContainer = document.getElementById("favorite-list");
+
+      favContainer.innerHTML = "";
+
+
+
+      for (let id of favs) {
+
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+
+        const meal = (await res.json()).meals[0];
+
+        displayMeal(meal, favContainer);
+
+      }
+
+    }
+
+
+
+    // 초기 실행
+
+    loadCategories();
+
+    loadFavorites();
+
+    showTodayMeal();
+
+  </script>
+
+</body>
+
+</html>
+
