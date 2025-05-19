@@ -282,29 +282,28 @@
     }
 
     async function showDetails(id) {
-      const res = await fetch(
-        `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
-      );
-      const meal = (await res.json()).meals[0];
-      modalContent.innerHTML = `
-        <h2>${meal.strMeal}</h2>
-        <img src="${meal.strMealThumb}" width="200" alt="${meal.strMeal}" />
-        <p><strong>Ingredients:</strong></p>
-        <ul>
-          ${[...Array(20).keys()]
-            .map(
-              (i) =>
-                meal[`strIngredient${i + 1}`]
-                  ? `<li>${meal[`strIngredient${i + 1}`]} - ${meal[`strMeasure${i + 1}`]}</li>`
-                  : ""
-            )
-            .join("")}
-        </ul>
-        <p><strong>Instructions:</strong></p>
-        <p>${meal.strInstructions}</p>
-      `;
-      modal.classList.remove("hidden");
-    }
+  const res = await fetch(
+    `https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`
+  );
+  const meal = (await res.json()).meals[0];
+  modalContent.innerHTML = `
+    <h2>${meal.strMeal}</h2>
+    <img src="${meal.strMealThumb}" width="200" alt="${meal.strMeal}" />
+    <p><strong>Ingredients:</strong></p>
+    <ul>
+      ${[...Array(20).keys()]
+        .map(
+          (i) =>
+            meal[`strIngredient${i + 1}`]
+              ? `<li>${meal[`strIngredient${i + 1}`]} - ${meal[`strMeasure${i + 1}`]}</li>`
+              : ""
+        )
+        .join("")}
+    </ul>
+  `;
+  modal.classList.remove("hidden");
+}
+
 
     function closeModal() {
       modal.classList.add("hidden");
