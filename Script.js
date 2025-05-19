@@ -6,7 +6,7 @@ const modalContent = document.getElementById("modal-content");
 async function fetchMeals(keyword = "") {
   const res = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${keyword}`);
   const data = await res.json();
-  mealList.innerHTML = ""; // 검색할 때마다 초기화
+  mealList.innerHTML = "";
   if (data.meals) {
     displayMeals(data.meals);
   } else {
@@ -18,13 +18,23 @@ function displayMeals(meals) {
   meals.forEach(meal => {
     const div = document.createElement("div");
     div.className = "meal";
-    div.innerHTML = `
-      <img src="${meal.strMealThumb}" onclick="showDetails(${meal.idMeal})" />
-      <h3 onclick="showDetails(${meal.idMeal})">${meal.strMeal}</h3>
-      <button class="favorite" onclick="toggleFavorite(event, ${meal.idMeal})">
-        ${isFavorite(meal.idMeal) ? "❤️" : "🤍"}
-      </button>
-    `;
+
+    const img = document.createElement("img");
+    img.src = meal.strMealThumb;
+    img.addEventListener("click", () => showDetails(meal.idMeal));
+
+    const h3 = document.createElement("h3");
+    h3.textContent = meal.strMeal;
+    h3.addEventListener("click", () => showDetails(meal.idMeal));
+
+    const btn = document.createElement("button");
+    btn.className = "favorite";
+    btn.textContent = isFavorite(meal.idMeal) ? "❤️" : "🤍";
+    btn.addEventListener("click", (event) => toggleFavorite(event, meal.idMeal));
+
+    div.appendChild(img);
+    div.appendChild(h3);
+    div.appendChild(btn);
     mealList.appendChild(div);
   });
 }
@@ -50,21 +60,24 @@ function closeModal() {
 }
 
 function toggleFavorite(event, id) {
-  event.stopPropagation(); // 클릭 이벤트가 부모로 전달되지 않게 막음
+  event.stopPropagation();
   let favs = JSON.parse(localStorage.getItem("favorites")) || [];
-  if (favs.includes(id)) {
-    favs = favs.filter(x => x !== id);
+  const idStr = id.toString();
+
+  if (favs.includes(idStr)) {
+    favs = favs.filter(x => x !== idStr);
   } else {
-    favs.push(id);
+    favs.push(idStr);
   }
+
   localStorage.setItem("favorites", JSON.stringify(favs));
-  fetchMeals(document.getElementById("searchInput").value); // 하트 갱신
-  showTodayMeal(); // 오늘 추천 음식도 갱신
+  fetchMeals(document.getElementById("searchInput").value);
+  showTodayMeal();
 }
 
 function isFavorite(id) {
   const favs = JSON.parse(localStorage.getItem("favorites")) || [];
-  return favs.includes(id);
+  return favs.includes(id.toString());
 }
 
 async function showTodayMeal() {
