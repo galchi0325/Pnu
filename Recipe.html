@@ -1,22 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Meal Recommender</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>오늘 뭐 먹지?</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <h1>🍱 오늘의 음식 추천</h1>
-  <div id="today-meal"></div>
 
-  <div id="search-bar">
-    <input type="text" id="searchInput" placeholder="음식 이름을 입력하세요" />
-    <button onclick="searchMeals()">검색</button>
-    <button onclick="pickRandomMeal()">랜덤 추천</button>
-  </div>
+  <header>
+    <h1>오늘 뭐 먹지?</h1>
+  </header>
 
-  <h2>전체 음식 목록</h2>
-  <div id="meal-list" class="grid"></div>
+  <main>
+    <section>
+      <h2 class="section-title">🥘 오늘의 추천 레시피</h2>
+      <div id="today-meal"></div>
+      <button onclick="pickRandomMeal()">🎲 랜덤 추천</button>
+    </section>
+
+    <section>
+      <h2 class="section-title">🔍 재료로 레시피 찾기</h2>
+      <div id="ingredient-search">
+        <input type="text" id="ingredientInput" placeholder="예: chicken, onion">
+        <button onclick="searchByIngredient()">재료로 찾기</button>
+      </div>
+    </section>
+
+    <section>
+      <h2 class="section-title">📂 카테고리별 보기</h2>
+      <div id="category-buttons" class="grid"></div>
+    </section>
+
+    <section>
+      <h2 class="section-title">📋 전체 음식 목록</h2>
+      <div id="meal-list" class="grid"></div>
+    </section>
+
+    <section>
+      <h2 class="section-title">❤️ 즐겨찾기한 레시피</h2>
+      <div id="favorite-list" class="grid"></div>
+    </section>
+  </main>
 
   <div id="modal" class="hidden">
     <div id="modal-content"></div>
@@ -25,4 +52,5 @@
 
   <script src="script.js"></script>
 </body>
+
 </html>
