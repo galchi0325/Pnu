@@ -61,12 +61,22 @@
     .hidden {
       display: none;
     }
+    #pagination {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #pagination button {
+      margin: 0 5px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <h1>❤ 즐겨찾기한 레시피</h1>
   <button class="back" onclick="location.href='index.html'">← 돌아가기</button>
   <div id="favorite-list" class="grid"></div>
+  <div id="pagination"></div>
 
   <div id="modal" class="hidden">
     <div id="modal-content"></div>
@@ -77,6 +87,11 @@
     const favContainer = document.getElementById("favorite-list");
     const modal = document.getElementById("modal");
     const modalContent = document.getElementById("modal-content");
+    const pagination = document.getElementById("pagination");
+
+    let allFavorites = [];
+    let currentPage = 1;
+    const itemsPerPage = 16;
 
     function getFavorites() {
       return JSON.parse(localStorage.getItem("favorites") || "[]");
@@ -84,14 +99,62 @@
 
     async function loadFavorites() {
       const favs = getFavorites();
-      favContainer.innerHTML = "";
+      allFavorites = favs;
+      renderFavorites();
+      renderPagination();
+    }
 
-      if (favs.length === 0) {
+    function renderPagination() {
+      const totalPages = Math.ceil(allFavorites.length / itemsPerPage);
+      pagination.innerHTML = "";
+
+      if (currentPage > 1) {
+        const prevBtn = document.createElement("button");
+        prevBtn.textContent = "이전";
+        prevBtn.onclick = () => {
+          currentPage--;
+          renderFavorites();
+          renderPagination();
+        };
+        pagination.appendChild(prevBtn);
+      }
+
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.style.fontWeight = i === currentPage ? "bold" : "normal";
+        btn.onclick = () => {
+          currentPage = i;
+          renderFavorites();
+          renderPagination();
+        };
+        pagination.appendChild(btn);
+      }
+
+      if (currentPage < totalPages) {
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "다음";
+        nextBtn.onclick = () => {
+          currentPage++;
+          renderFavorites();
+          renderPagination();
+        };
+        pagination.appendChild(nextBtn);
+      }
+    }
+
+    async function renderFavorites() {
+      favContainer.innerHTML = "";
+      const start = (currentPage - 1) * itemsPerPage;
+      const end = start + itemsPerPage;
+      const currentFavs = allFavorites.slice(start, end);
+
+      if (currentFavs.length === 0) {
         favContainer.innerHTML = "<p>즐겨찾기한 레시피가 없습니다.</p>";
         return;
       }
 
-      for (let id of favs) {
+      for (let id of currentFavs) {
         const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
         const meal = (await res.json()).meals[0];
         displayMeal(밥);
@@ -114,10 +177,10 @@
       const index = favs.indexOf(id);
       if (index > -1) favs.splice(index, 1);
       localStorage.setItem("favorites", JSON.stringify(favs));
-      loadFavorites(); // 다시 그리기
+      loadFavorites(); // 다시 불러오기
     }
 
-    async function showDetails(id) {
+    window.showDetails = async function(id) {
       const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
       const meal = (await res.json()).meals[0];
       modalContent.innerHTML = `
@@ -137,7 +200,6 @@
       modal.classList.add("hidden");
     }
 
-    // 바깥 클릭 시 모달 닫기
     window.addEventListener("click", function(e) {
       if (e.target === modal) closeModal();
     });
@@ -146,4 +208,3 @@
   </script>
 </body>
 </html>
-
