@@ -125,6 +125,21 @@
     .hidden {
       display: none;
     }
+    <!-- body 안, header 바로 아래에 추가 -->
+<button id="bookmarkBtn" style="
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  z-index: 1000;
+">즐겨찾기 보기</button>
+
 
     /* 반응형 디자인 */
     @media (max-width: 768px) {
@@ -188,11 +203,6 @@
     <section>
       <h2 class="section-title">📋 전체 음식 목록</h2>
       <div id="meal-list" class="grid"></div>
-    </section>
-
-    <section>
-      <h2 class="section-title">❤️ 즐겨찾기한 레시피</h2>
-      <div id="favorite-list" class="grid"></div>
     </section>
   </main>
 
@@ -385,6 +395,78 @@
         <img src="${meal.strMealThumb}" alt="${meal.strMeal}" style="width: 100%; max-width: 300px; border-radius: 10px; cursor: pointer;" onclick="showDetails(${meal.idMeal})" />
         <h3>${meal.strMeal}</h3>
       `;
+      document.getElementById("bookmarkBtn").addEventListener("click", () => {
+  const favs = getFavorites();
+  if (favs.length === 0) {
+    alert("즐겨찾기한 레시피가 없습니다.");
+    return;
+  }
+
+  const newWin = window.open("", "즐겨찾기", "width=400,height=600");
+
+  newWin.document.write(`
+    <html lang="ko">
+    <head>
+      <meta charset="UTF-8" />
+      <title>즐겨찾기 리스트</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .item { margin-bottom: 20px; cursor: pointer; }
+        .item img { width: 80px; height: 80px; vertical-align: middle; margin-right: 10px; border-radius: 8px; }
+        .ingredients { margin-left: 90px; color: #555; display: none; }
+        .item:hover { background-color: #ffe0b3; }
+      </style>
+    </head>
+    <body>
+      <h2>즐겨찾기 리스트</h2>
+      <div id="list"></div>
+      <script>
+        const favs = ${JSON.stringify(favs)};
+        async function fetchMeal(id) {
+          const res = await fetch(\`https://www.themealdb.com/api/json/v1/1/lookup.php?i=\${id}\`);
+          const data = await res.json();
+          return data.meals[0];
+        }
+
+        const listDiv = document.getElementById("list");
+
+        async function loadList() {
+          for (const id of favs) {
+            const meal = await fetchMeal(id);
+            const div = document.createElement("div");
+            div.className = "item";
+            div.innerHTML = \`
+              <img src="\${meal.strMealThumb}" alt="\${meal.strMeal}" />
+              <strong>\${meal.strMeal}</strong>
+              <div class="ingredients">
+                <p><strong>재료:</strong></p>
+                <ul>
+                  \${[...Array(20).keys()]
+                    .map(i => meal[\`strIngredient\${i+1}\`] && meal[\`strIngredient\${i+1}\`].trim() !== "" ? 
+                      \`<li>\${meal[\`strIngredient\${i+1}\`]} - \${meal[\`strMeasure\${i+1}\`]}</li>\` : "")
+                    .join("")}
+                </ul>
+              </div>
+            \`;
+
+            div.addEventListener("click", () => {
+              const ing = div.querySelector(".ingredients");
+              ing.style.display = ing.style.display === "none" ? "block" : "none";
+            });
+
+            listDiv.appendChild(div);
+          }
+        }
+
+        loadList();
+      <\/script>
+    </body>
+    </html>
+  `);
+
+  newWin.document.close();
+});
+
     }
 
     // 초기 실행
