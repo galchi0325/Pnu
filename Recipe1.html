@@ -18,12 +18,25 @@
       padding: 20px;
       text-align: center;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      position: relative;
     }
 
     header h1 {
       margin: 0;
       font-size: 2.5rem;
       color: #fff;
+    }
+
+    #favorite-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: white;
+      border: 2px solid #ffb84d;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 16px;
+      cursor: pointer;
     }
 
     main {
@@ -74,7 +87,6 @@
       border: 1px solid #eee;
       border-radius: 8px;
       padding: 10px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
       background-color: #fff;
       text-align: center;
     }
@@ -91,20 +103,6 @@
       font-size: 20px;
       cursor: pointer;
       margin-top: 10px;
-    }
-
-    .category-button {
-      padding: 10px 14px;
-      font-size: 15px;
-      margin: 5px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background-color: white;
-      cursor: pointer;
-    }
-
-    .category-button:hover {
-      background-color: #ffe0b3;
     }
 
     #modal {
@@ -124,42 +122,12 @@
     .hidden {
       display: none;
     }
-
-    @media (max-width: 768px) {
-      header h1 {
-        font-size: 2rem;
-      }
-
-      .meal {
-        width: 150px;
-      }
-
-      #ingredient-search input {
-        width: 100%;
-      }
-
-      #ingredient-search button {
-        width: 100%;
-        margin-top: 10px;
-      }
-
-      .grid {
-        flex-direction: column;
-        align-items: center;
-      }
-
-      #modal {
-        top: 10%;
-        left: 5%;
-        width: 90%;
-        max-height: 80vh;
-      }
-    }
   </style>
 </head>
 <body>
   <header>
     <h1>오늘 뭐 먹지?</h1>
+    <button id="favorite-btn" onclick="openFavoritesWindow()">❤️ 즐겨찾기 보기</button>
   </header>
 
   <main>
@@ -186,12 +154,6 @@
       <h2 class="section-title">📋 전체 음식 목록</h2>
       <div id="meal-list" class="grid"></div>
     </section>
-
-    <section>
-      <h2 class="section-title">❤️ 즐겨찾기한 레시피</h2>
-      <button onclick="openFavoritesWindow()">❤️ 즐겨찾기 보기</button>
-      <div id="favorite-list" class="grid"></div>
-    </section>
   </main>
 
   <div id="modal" class="hidden">
@@ -200,235 +162,54 @@
   </div>
 
   <script>
-    const mealList = document.getElementById("meal-list");
-    const todayMealDiv = document.getElementById("today-meal");
-    const modal = document.getElementById("modal");
-    const modalContent = document.getElementById("modal-content");
+    function openFavoritesWindow() {
+      const favWindow = window.open("", "Favorites", "width=600,height=600");
+      const favs = JSON.parse(localStorage.getItem("favorites") || "[]");
+      if (favs.length === 0) {
+        favWindow.document.write("<p>즐겨찾기한 레시피가 없습니다.</p>");
+        return;
+      }
 
-    function getFavorites() {
-      return JSON.parse(localStorage.getItem("favorites") || "[]");
-    }
-
-    function saveFavorites(favs) {
-      localStorage.setItem("favorites", JSON.stringify(favs));
-    }
-
-    async function loadCategories() {
-      const res = await fetch("https://www.themealdb.com/api/json/v1/1/categories.php");
-      const data = await res.json();
-      const container = document.getElementById("category-buttons");
-
-      data.categories.forEach((cat) => {
-        const btn = document.createElement("button");
-        btn.className = "category-button";
-        btn.textContent = cat.strCategory;
-        btn.onclick = () => fetchMealsByCategory(cat.strCategory);
-        container.appendChild(btn);
+      favWindow.document.write('<h2>❤️ 즐겨찾기 레시피</h2>');
+      favs.forEach(async (id) => {
+        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+        const meal = (await res.json()).meals[0];
+        const mealHTML = `
+          <div style="margin-bottom:20px;text-align:center;">
+            <img src="${meal.strMealThumb}" width="200" style="cursor:pointer;" onclick="window.opener.showModalFromChild('${meal.idMeal}')" />
+            <h3>${meal.strMeal}</h3>
+          </div>
+        `;
+        favWindow.document.body.innerHTML += mealHTML;
       });
     }
 
-    async function fetchMealsByCategory(category) {
-      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${category}`);
-      const data = await res.json();
-      mealList.innerHTML = "";
-      for (let item of data.meals) {
-        const mealData = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.idMeal}`);
-        const meal = (await mealData.json()).meals[0];
-        displayMeal(meal, mealList);
-      }
-    }
-
-    async function searchByIngredient() {
-      const input = document.getElementById("ingredientInput").value.trim();
-      if (!input) {
-        alert("재료를 입력해주세요!");
-        return;
-      }
-      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${input}`);
-      const data = await res.json();
-      mealList.innerHTML = "";
-      if (!data.meals) {
-        mealList.innerHTML = "<p>해당 재료로 만든 음식을 찾을 수 없습니다.</p>";
-        return;
-      }
-      for (let item of data.meals) {
-        const mealData = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.idMeal}`);
-        const meal = (await mealData.json()).meals[0];
-        displayMeal(meal, mealList);
-      }
-    }
-
-    function displayMeal(meal, target) {
-      const div = document.createElement("div");
-      div.className = "meal";
-      div.innerHTML = `
-        <img src="${meal.strMealThumb}" onclick="showDetails(${meal.idMeal})" alt="${meal.strMeal}" />
-        <h3>${meal.strMeal}</h3>
-        <button class="favorite" onclick="toggleFavorite(${meal.idMeal})">
-          ${isFavorite(meal.idMeal) ? "❤️" : "🤍"}
-        </button>
-      `;
-      target.appendChild(div);
+    function showModalFromChild(id) {
+      showDetails(id);
     }
 
     async function showDetails(id) {
       const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
       const meal = (await res.json()).meals[0];
-      modalContent.innerHTML = `
+      const modal = document.getElementById("modal");
+      const content = document.getElementById("modal-content");
+      content.innerHTML = `
         <h2>${meal.strMeal}</h2>
-        <img src="${meal.strMealThumb}" width="200" alt="${meal.strMeal}" />
-        <p><strong>Ingredients:</strong></p>
+        <img src="${meal.strMealThumb}" width="200" />
         <ul>
-          ${[...Array(20).keys()]
-            .map(
-              (i) =>
-                meal[`strIngredient${i + 1}`]
-                  ? `<li>${meal[`strIngredient${i + 1}`]} - ${meal[`strMeasure${i + 1}`]}</li>`
-                  : ""
-            )
-            .join("")}
+          ${[...Array(20).keys()].map(i => {
+            const ing = meal[`strIngredient${i+1}`];
+            const mea = meal[`strMeasure${i+1}`];
+            return ing ? `<li>${ing} - ${mea}</li>` : '';
+          }).join('')}
         </ul>
       `;
       modal.classList.remove("hidden");
     }
 
     function closeModal() {
-      modal.classList.add("hidden");
+      document.getElementById("modal").classList.add("hidden");
     }
-
-    function toggleFavorite(id) {
-      let favs = getFavorites();
-      if (favs.includes(id)) {
-        favs = favs.filter((x) => x !== id);
-      } else {
-        favs.push(id);
-      }
-      saveFavorites(favs);
-      loadFavorites();
-      showTodayMeal();
-    }
-
-    function isFavorite(id) {
-      const favs = getFavorites();
-      return favs.includes(id);
-    }
-
-    async function showTodayMeal() {
-      const today = new Date().toDateString();
-      const savedDate = localStorage.getItem("lastDate");
-      let mealId = localStorage.getItem("todayMeal");
-
-      if (today !== savedDate) {
-        const favs = getFavorites();
-        if (favs.length > 0) {
-          mealId = favs[Math.floor(Math.random() * favs.length)];
-          localStorage.setItem("todayMeal", mealId);
-          localStorage.setItem("lastDate", today);
-        }
-      }
-
-      if (mealId) {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
-        const meal = (await res.json()).meals[0];
-        todayMealDiv.innerHTML = `
-          <img src="${meal.strMealThumb}" alt="${meal.strMeal}" style="width: 100%; max-width: 300px; border-radius: 10px; cursor: pointer;" onclick="showDetails(${meal.idMeal})" />
-          <h3>${meal.strMeal}</h3>
-        `;
-      } else {
-        todayMealDiv.innerHTML = "<p>좋아요한 레시피가 없습니다.</p>";
-      }
-    }
-
-    async function loadFavorites() {
-      const favs = getFavorites();
-      const favContainer = document.getElementById("favorite-list");
-      favContainer.innerHTML = "";
-
-      for (let id of favs) {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
-        const meal = (await res.json()).meals[0];
-        displayMeal(meal, favContainer);
-      }
-    }
-
-    async function pickRandomMeal() {
-      const favs = getFavorites();
-      if (favs.length === 0) {
-        alert("즐겨찾기한 레시피가 없습니다.");
-        return;
-      }
-
-      const randomId = favs[Math.floor(Math.random() * favs.length)];
-      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${randomId}`);
-      const meal = (await res.json()).meals[0];
-
-      todayMealDiv.innerHTML = `
-        <img src="${meal.strMealThumb}" alt="${meal.strMeal}" style="width: 100%; max-width: 300px; border-radius: 10px; cursor: pointer;" onclick="showDetails(${meal.idMeal})" />
-        <h3>${meal.strMeal}</h3>
-      `;
-    }
-
-    function openFavoritesWindow() {
-      const favs = getFavorites();
-      if (favs.length === 0) {
-        alert("즐겨찾기한 레시피가 없습니다.");
-        return;
-      }
-
-      const favWindow = window.open("", "_blank", "width=800,height=600");
-      favWindow.document.write(`
-        <html>
-        <head>
-          <title>즐겨찾기 레시피</title>
-          <style>
-            body {
-              font-family: 'Segoe UI', sans-serif;
-              background-color: #fffdfa;
-              padding: 20px;
-              color: #333;
-            }
-            .meal {
-              width: 200px;
-              border: 1px solid #eee;
-              border-radius: 8px;
-              padding: 10px;
-              margin: 10px;
-              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-              background-color: #fff;
-              text-align: center;
-              display: inline-block;
-              vertical-align: top;
-            }
-            .meal img {
-              width: 100%;
-              border-radius: 5px;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>❤️ 즐겨찾기한 레시피</h1>
-          <div id="fav-container"></div>
-        </body>
-        </html>
-      `);
-
-      favs.forEach(async (id) => {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
-        const meal = (await res.json()).meals[0];
-        const container = favWindow.document.getElementById("fav-container");
-        const div = favWindow.document.createElement("div");
-        div.className = "meal";
-        div.innerHTML = `
-          <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
-          <h3>${meal.strMeal}</h3>
-        `;
-        container.appendChild(div);
-      });
-    }
-
-    loadCategories();
-    loadFavorites();
-    showTodayMeal();
   </script>
 </body>
 </html>
