@@ -16,8 +16,21 @@ for i in range(gene_list_count):
 print(result)
 #스타트 마커와 같은 유전자 개수 찾기 까지는 성공
 i=0
+gene_panals = []
+gene_string = ''
 for j in result:
-	if j=='GTGT':
-		i+=1
-print(i)
+	J = list(j)
+	if j!='GTGT':
+		if gene_string == '':
+			gene_string+=j
+		else:
+			gene_string+=J[3]
+	else:
+		if gene_string == '':
+			gene_string+=j
+		else:
+			gene_string+=J[3]
+			gene_panals.append(gene_string)
+			gene_string = j
+print(gene_panals)
 		
