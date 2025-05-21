@@ -33,10 +33,11 @@ def find_proper_genes(S,E):
 						gene_string = ''	
 					elif gene_string_1st == start:
 						gene_string+=J[3]
-	for panal in gene_panals:
-		all = S+E
-		for pattern in all:
-			if pattern in ''.join(list(panal)[1:-1]):
+	all = S+E
+	for pattern in all:
+		for panal in gene_panals:
+			panal_middle = ''.join(list(panal)[1:-1])
+			if pattern in panal_middle:
 				if panal in gene_panals:
 					gene_panals.remove(panal)
 	return(gene_panals)
@@ -49,4 +50,5 @@ def find_shortest_panal(L):
 		return(shortest_panal)
 
 S_i,E_i = start_end_input()
-print(find_shortest_panal(find_proper_genes(S_i,E_i)))
+gene_panals_list = find_proper_genes(S_i,E_i)
+print(find_shortest_panal(gene_panals_list))
