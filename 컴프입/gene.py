@@ -6,11 +6,19 @@ def start_end_input():
 def find_proper_genes(S,E):
 	f=open("genome.txt",'r',encoding='cp949')
 	genome = f.read()
-	gene_list = list(genome)
-	gene_list_count = len(gene_list)-3
+	
 	gene_panals = []
 	
 	for start in S:
+		pos = 0
+		while True:
+			start_idx = genome.find(start,pos)
+			if start_idx == -1:
+				break
+			end_idx = genome.find(end,pos+len(start))
+
+
+
 		for end in E:
 			S_int = len(start)
 			E_int = len(end)
