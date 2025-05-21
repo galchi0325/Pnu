@@ -3,31 +3,51 @@ def start_end_input():
 	E_i = list(input().split())
 	return(S_i,E_i)
 	
+def find_proper_genes(S,E):
+	genome = """ATAGTGTCTTCAAAGCTCCAGGTGGTCCTTCTAAATAGCGCCTAAGCAGCTTCCTTATGACAGGGTGTCGGCGATTATTTATCTCTGTGTTCTATTTTTAAGCAAGTTGTCATCATTGAAATAGAGAACTCATTTTTTTGTTTTTTGTATTTCTTCTTTTTTTTGTATGCATTTTTATTTGTGAACTGTAAATTTTCATAACGTTCACAGAGTTTTAAATAATTTACAGTTAAATCAAAATCACTTCACTACATATTGCTACTTCAAATAACTAATCTAACTGGAGTAGTGGTGTTAAACAGGAATCACGAGGCGAAGAAATCCAGTACGTGTAAACGAGCGAACGAATGAGATTATCAGTTATATTTTCATCGTCATTGTCGCGTGGACAATACACTAAACATATCGCTAAAGCTTCATCTACACGATTAGCGAAAATTTTATATGGAATTGACACCTCGCACGCAGATTTCTGCATACGATTGCACATTGTGAACAAATATGCTATTCGTGTATAAACGCCTTAAAACACATGGGTGGTCGAAT"""
+	gene_list = list(genome)
+	gene_list_count = len(gene_list)-3
+	gene_panals = []
+	for start in S:
+		for end in E:
+			S_int = len(start)
+			E_int = len(end)
+			result = []
+			for i in range(gene_list_count):
+				Genes =gene_list[i:i+S_int]
+				result.append("".join(Genes))
+			gene_string = ''
+			for j in result:
+				J = list(j)
+				if j==start:
+					if gene_string == '':
+						gene_string = j
+					else:
+						gene_string = ''
+				else:
+					gene_string_1st = ''.join(list(gene_string)[0:S_int])
+					gene_string_last = ''.join(list(gene_string)[-E_int:])
+					gene_string_length = len(gene_string)
+					if gene_string_last == end and gene_string_1st == start and gene_string_length >= S_int+E_int:
+						gene_panals.append(gene_string)
+						gene_string = ''	
+					elif gene_string_1st == start:
+						gene_string+=J[3]
+	for panal in gene_panals:
+		all = S+E
+		for pattern in all:
+			print(pattern,''.join(list(panal)[1:-1]))
+			print(pattern in ''.join(list(panal)[1:-1]))
+			if pattern in ''.join(list(panal)[1:-1]):
+				if panal in gene_panals:
+					gene_panals.remove(panal)
+	return(gene_panals)
 
-genome = """ATAGTGTCTTCAAAGCTCCAGGTGGTCCTTCTAAATAGCGCCTAAGCAGCTTCCTTATGACAGGGTGTCGGCGATTATTTATCTCTGTGTTCTATTTTTAAGCAAGTTGTCATCATTGAAATAGAGAACTCATTTTTTTGTTTTTTGTATTTCTTCTTTTTTTTGTATGCATTTTTATTTGTGAACTGTAAATTTTCATAACGTTCACAGAGTTTTAAATAATTTACAGTTAAATCAAAATCACTTCACTACATATTGCTACTTCAAATAACTAATCTAACTGGAGTAGTGGTGTTAAACAGGAATCACGAGGCGAAGAAATCCAGTACGTGTAAACGAGCGAACGAATGAGATTATCAGTTATATTTTCATCGTCATTGTCGCGTGGACAATACACTAAACATATCGCTAAAGCTTCATCTACACGATTAGCGAAAATTTTATATGGAATTGACACCTCGCACGCAGATTTCTGCATACGATTGCACATTGTGAACAAATATGCTATTCGTGTATAAACGCCTTAAAACACATGGGTGGTCGAAT"""
-gene_list = list(genome)
-gene_list_count = len(gene_list)-3
-
-result = []
-for i in range(gene_list_count):
-	Genes =gene_list[i:i+4]
-	result.append("".join(Genes))
-#스타트 마커와 같은 유전자 개수 찾기 까지는 성공
-i=0
-gene_panals = []
-gene_string = ''
-for j in result:
-	J = list(j)
-	if j=='GTGT':
-		if gene_string == '':
-			gene_string = j
-		else:
-			gene_panals.append(gene_string)
-			gene_string = j
+def find_shortest_panals(L):
+	if L == []:
+		return('None')
 	else:
-		gene_srting_1st = ''.join(list(gene_string)[0:4])
-		if gene_srting_1st == 'GTGT':
-			gene_string+=J[3]
-			
-print(gene_panals)
-		
+		return('gg')
+
+S_i,E_i = start_end_input()
+print(find_proper_genes(S_i,E_i))
