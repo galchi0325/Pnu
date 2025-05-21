@@ -4,7 +4,7 @@ def start_end_input():
 	return(S_i,E_i)
 	
 def find_proper_genes(S,E):
-	f=open("gene.txt",'r',encoding='cp949')
+	f=open("genome.txt",'r',encoding='cp949')
 	genome = f.read()
 	gene_list = list(genome)
 	gene_list_count = len(gene_list)-3
