@@ -46,7 +46,7 @@ def find_shortest_panal(L):
 	if L == []:
 		return('None')
 	else:
-		shortest_panal = sorted(L,key=len)[0]
+		shortest_panal = sorted(L)[0]
 		return(shortest_panal)
 
 S_i,E_i = start_end_input()
