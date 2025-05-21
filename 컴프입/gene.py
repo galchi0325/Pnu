@@ -8,6 +8,7 @@ def find_proper_genes(S,E):
 	gene_list = list(genome)
 	gene_list_count = len(gene_list)-3
 	gene_panals = []
+	
 	for start in S:
 		for end in E:
 			S_int = len(start)
@@ -16,6 +17,7 @@ def find_proper_genes(S,E):
 			for i in range(gene_list_count):
 				Genes =gene_list[i:i+S_int]
 				result.append("".join(Genes))
+			
 			gene_string = ''
 			for j in result:
 				J = list(j)
@@ -24,6 +26,7 @@ def find_proper_genes(S,E):
 						gene_string = j
 					else:
 						gene_string = ''
+						
 				else:
 					gene_string_1st = ''.join(list(gene_string)[0:S_int])
 					gene_string_last = ''.join(list(gene_string)[-E_int:])
