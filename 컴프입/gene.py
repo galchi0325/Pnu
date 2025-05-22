@@ -5,7 +5,7 @@ def start_end_input():
 	
 def find_proper_genes(S,E):
 	f=open("genome.txt",'r',encoding='cp949')
-	genome = f.read()
+	genome = "".join(f.read().splitlines())
 	
 	gene_panals = []
 	
