@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+</head>
+<body>
+<script>
+    function pr(msg,arr){
+        document.write(msg
+                        + arr.toString()
+                        + "<br>"
+        );
+    }
+
+    let a = new Array('Hwang','Kim','Lee');
+    let b = new Array('Park');
+    let c;
+
+    pr("Array a = ",a );
+    pr("Array b = ",b );
+    document.write("<br>")
+    
+    c = a.concat(b);
+
+    pr("c = a.concat(b) => c = ",c);
+    pr("c = a.concat(b) => a = ",a);
+
+    c = a.join("##");
+    pr("c = a.join() => c = ",c );
+    pr("c = a.join() => a = ",a );
+
+    c= a.reverse();
+    pr("c = a.reverse() => c = ",c );
+    pr("c = a.reverse() => a = ",a );
+
+    c = a.slice(1,2);
+    pr("c = a.slice(1,2) => c = ",c );
+    pr("c = a.slice(1,2) => a = ",a );
+
+    c = a.sort();
+    pr("c = a.sort() => c = ",c );
+    pr("c = a.sort() => a = ",a );
+
+    c=a.toString();
+    document.write("a.toString() : "+ c);
+</script>
+</body>
+</html>
