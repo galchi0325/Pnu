@@ -112,18 +112,16 @@ async function showDetails(id) {
           .join('')}
       </ul>
 
-      <button onclick="toggleInstructions()" style="margin-top:10px; padding:6px 12px; border:none; background-color:#ffb84d; color:white; border-radius:5px; cursor:pointer;">
-        📖 조리법 보기
-      </button>
+    <button onclick="toggleInstructions()" class="button-primary">
+      📖 조리법 보기
+    </button>
 
       ${meal.strYoutube ? `
-      <button onclick="window.open('${meal.strYoutube}', '_blank')" style="margin-left:10px; padding:6px 12px; border:none; background-color:#db4437; color:white; border-radius:5px; cursor:pointer;">
-        ▶ 동영상 보기
-      </button>` : ''}
+    <button onclick="window.open('${meal.strYoutube}', '_blank')" class="button-danger">
+      ▶ 동영상 보기
+    </button>` : ''}
 
-      <ol id="instructions" class="hidden" style="margin-top: 10px;">
-        ${cleanedInstructions}
-      </ol>
+    <img src="${meal.strMealThumb}" class="clickable-img" onclick="showDetails(${meal.idMeal})" />
     `;
 
     modal.classList.remove("hidden");
