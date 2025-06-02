@@ -417,47 +417,40 @@
     }
 
     async function showDetails(id) {
-      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
-      const data = await res.json();
-      const meal = data.meals[0];
+  const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+  const data = await res.json();
+  const meal = data.meals[0];
 
-      let ingredientsHTML = "<ul>";
-      for (let i = 1; i <= 20; i++) {
-        const ingredient = meal[`strIngredient${i}`];
-        const measure = meal[`strMeasure${i}`];
-        if (ingredient && ingredient.trim()) {
-          ingredientsHTML += `<li>${ingredient} - ${measure}</li>`;
-        }
-      }
-      ingredientsHTML += "</ul>";
-
-      modalContent.innerHTML = `
-        <h2>${meal.strMeal}</h2>
-        <img src="${meal.strMealThumb}" alt="${meal.strMeal}" style="width:100%; border-radius:10px; margin-bottom: 10px;">
-        <h3>Ingredients</h3>
-        ${ingredientsHTML}
-        <h3>Instructions</h3>
-        <p style="white-space: pre-line;">${meal.strInstructions}</p>
-        ${meal.strYoutube ? `<h3>Video</h3><a href="${meal.strYoutube}" target="_blank" rel="noopener">▶ 유튜브 영상 보기</a>` : ""}
-      `;
-
-      modal.classList.remove("hidden");
-      overlay.classList.remove("hidden");
-      modal.focus();
+  let ingredientsHTML = "<ul>";
+  for (let i = 1; i <= 20; i++) {
+    const ingredient = meal[`strIngredient${i}`];
+    const measure = meal[`strMeasure${i}`];
+    if (ingredient && ingredient.trim()) {
+      ingredientsHTML += `<li>${ingredient} - ${measure}</li>`;
     }
+  }
+  ingredientsHTML += "</ul>";
 
-    closeModalBtn.onclick = () => {
-      modal.classList.add("hidden");
-      overlay.classList.add("hidden");
-    };
+  // 조리법 문장을 줄 단위로 나누고 번호 붙이기
+  const instructions = meal.strInstructions
+    .split(/\r?\n/)
+    .filter(line => line.trim() !== "")
+    .map((step, index) => `${index + 1}. ${step.trim()}`)
+    .join("<br>");
 
-    // 모달 외부 또는 오버레이 클릭 시 닫기
-    window.onclick = e => {
-      if (e.target === modal || e.target === overlay) {
-        modal.classList.add("hidden");
-        overlay.classList.add("hidden");
-      }
-    };
+  modalContent.innerHTML = `
+    <h2>${meal.strMeal}</h2>
+    <img src="${meal.strMealThumb}" alt="${meal.strMeal}" style="width:100%; border-radius:10px; margin-bottom: 10px;">
+    <h3>Ingredients</h3>
+    ${ingredientsHTML}
+    <h3>Instructions</h3>
+    <p style="white-space: pre-line;">${instructions}</p>
+  `;
+
+  modal.classList.remove("hidden");
+  overlay.classList.remove("hidden");
+  modal.focus();
+}
 
     async function showTodayMeal() {
       const res = await fetch("https://www.themealdb.com/api/json/v1/1/random.php");
