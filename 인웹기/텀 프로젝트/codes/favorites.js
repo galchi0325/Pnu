@@ -148,6 +148,9 @@ function closeModal() {
 
 window.addEventListener("click", function(e) {
   if (e.target === modal) closeModal();
+    if (e.target === modal || e.target === overlay) {
+    closeModal();
+  }
 });
 
 function toggleInstructions() {
