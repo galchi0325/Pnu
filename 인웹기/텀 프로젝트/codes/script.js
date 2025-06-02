@@ -108,11 +108,11 @@ async function showDetails(id) {
       <p><strong>Ingredients:</strong></p>
       <ul>
         ${[...Array(20).keys()]
-          .map(i => meal[`strIngredient${i+1}`] ? `<li>${meal[`strIngredient${i+1}`]} - ${meal[`strMeasure${i+1}`]}</li>` : '')
+          .map(i => meal[`strIngredient${i + 1}`] ? `<li>${meal[`strIngredient${i + 1}`]} - ${meal[`strMeasure${i + 1}`]}</li>` : '')
           .join('')}
       </ul>
 
-      <button onclick="toggleInstructions()" class="button-primary" style="margin-top: 10px;">
+      <button class="button-primary" style="margin-top: 10px;">
         📖 조리법 보기
       </button>
 
@@ -127,28 +127,37 @@ async function showDetails(id) {
       </ol>
     `;
 
+    // 조리법 보기 버튼 클릭 이벤트 연결
+    const toggleBtn = modalContent.querySelector(".button-primary");
+    const instructions = modalContent.querySelector("#instructions");
+
+    toggleBtn.addEventListener("click", () => {
+      instructions.classList.toggle("hidden");
+    });
+
     modal.classList.remove("hidden");
     overlay.classList.remove("hidden");
+
   } catch (error) {
-    console.error("레시피 로딩 오류:", error);
-    alert("레시피 정보를 불러오는 데 실패했습니다.");
+    console.error("showDetails 에러:", error);
   }
 }
 
-
+// 모달 닫기 함수 (전역)
 function closeModal() {
   modal.classList.add("hidden");
   overlay.classList.add("hidden");
 }
 
-window.addEventListener("click", function(e) {
+// 모달 및 오버레이 클릭 시 닫기 (전역 이벤트 리스너)
+window.addEventListener("click", function (e) {
   if (e.target === modal || e.target === overlay) {
     closeModal();
   }
 });
 
 document.getElementById("searchBtn").addEventListener("click", searchByIngredient);
-document.getElementById("ingredientInput").addEventListener("keypress", function(e) {
+document.getElementById("ingredientInput").addEventListener("keypress", function (e) {
   if (e.key === "Enter") {
     searchByIngredient();
   }
@@ -291,12 +300,8 @@ function renderPagination() {
   }
 }
 
+// 초기 실행
 fetchAllMeals();
 loadCategories();
 loadFavorites();
 showTodayMeal();
-
-function toggleInstructions() {
-  const el = document.getElementById("instructions");
-  el.classList.toggle("hidden");
-}
