@@ -101,39 +101,49 @@ function toggleFavorite(id) {
   loadFavorites();
 }
 
-async function showDetails(id) {
-  const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
-  const meal = (await res.json()).meals[0];
+const overlay = document.getElementById("modal-overlay");
 
-  const cleanedInstructions = meal.strInstructions
-    .split(/[\r\n]+|(?<=\.) /)
-    .map(line => `<li>${line.trim()}</li>`)
-    .join("");
+function showDetails(id) {
+  fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`)
+    .then(res => res.json())
+    .then(data => {
+      const meal = data.meals[0];
+      const cleanedInstructions = meal.strInstructions
+        .split(/[\r\n]+|(?<=\.) /)
+        .map(line => `<li>${line.trim()}</li>`)
+        .join("");
 
-  modalContent.innerHTML = `
-    <h2>${meal.strMeal}</h2>
-    <img src="${meal.strMealThumb}" width="200" />
-    <p><strong>Ingredients:</strong></p>
-    <ul>
-      ${[...Array(20).keys()]
-        .map(i => meal[`strIngredient${i+1}`] ? `<li>${meal[`strIngredient${i+1}`]} - ${meal[`strMeasure${i+1}`]}</li>` : '')
-        .join('')}
-    </ul>
+      modalContent.innerHTML = `
+        <h2>${meal.strMeal}</h2>
+        <img src="${meal.strMealThumb}" width="200" />
+        <p><strong>Ingredients:</strong></p>
+        <ul>
+          ${[...Array(20).keys()]
+            .map(i => meal[`strIngredient${i+1}`] ? `<li>${meal[`strIngredient${i+1}`]} - ${meal[`strMeasure${i+1}`]}</li>` : '')
+            .join('')}
+        </ul>
 
-    <button onclick="toggleInstructions()" style="margin-top:10px; padding:6px 12px; border:none; background-color:#ffb84d; color:white; border-radius:5px; cursor:pointer;">
-      📖 조리법 보기
-    </button>
+        <button onclick="toggleInstructions()" style="margin-top:10px; padding:6px 12px; border:none; background-color:#ffb84d; color:white; border-radius:5px; cursor:pointer;">
+          📖 조리법 보기
+        </button>
 
-    <ol id="instructions" class="hidden" style="margin-top: 10px;">
-      ${cleanedInstructions}
-    </ol>
-  `;
+        <button onclick="window.open('${meal.strYoutube}', '_blank')" style="margin-left:10px; padding:6px 12px; border:none; background-color:#db4437; color:white; border-radius:5px; cursor:pointer;">
+          ▶ 동영상 보기
+        </button>
 
-  modal.classList.remove("hidden");
+        <ol id="instructions" class="hidden" style="margin-top: 10px;">
+          ${cleanedInstructions}
+        </ol>
+      `;
+
+      modal.classList.remove("hidden");
+      overlay.classList.remove("hidden");
+    });
 }
 
 function closeModal() {
   modal.classList.add("hidden");
+  overlay.classList.add("hidden");
 }
 
 window.addEventListener("click", function(e) {
