@@ -6,22 +6,22 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       background-color: #fffdfa;
       color: #333;
+      min-width: 320px;
     }
     header {
       background-color: #ffb84d;
       padding: 20px 30px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       position: relative;
+      text-align: center;
     }
     header h1 {
       margin: 0;
       font-size: 2.5rem;
-      color: #fff;
-      text-align: center;
+      color: white;
     }
     .bookmark-link {
       position: absolute;
@@ -68,6 +68,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
+      justify-content: center;
     }
     .meal {
       width: 200px;
@@ -75,7 +76,8 @@
       border-radius: 8px;
       padding: 10px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      background-color: #fff;
+      background-color: white;
+      text-align: center;
     }
     .meal img {
       width: 100%;
@@ -85,8 +87,10 @@
     .favorite {
       background: none;
       border: none;
-      font-size: 20px;
+      font-size: 24px;
       cursor: pointer;
+      margin-top: 6px;
+      user-select: none;
     }
     .favorite.hearted {
       color: red;
@@ -99,6 +103,7 @@
       border-radius: 5px;
       background-color: white;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
     .category-button:hover {
       background-color: #ffe0b3;
@@ -108,14 +113,15 @@
       top: 10%;
       left: 50%;
       transform: translateX(-50%);
-      width: 80%;
+      width: 90%;
+      max-width: 500px;
       max-height: 80vh;
       overflow-y: auto;
       background: white;
       border: 1px solid black;
       padding: 20px;
-      z-index: 10;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      z-index: 1000;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.25);
       border-radius: 10px;
     }
     .hidden {
@@ -132,10 +138,33 @@
       background-color: #ffd89b;
       border-radius: 5px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
     #pagination button:hover {
       background-color: #ffb84d;
       color: white;
+    }
+    #pagination button.active {
+      font-weight: bold;
+      background-color: #ffb84d;
+      color: white;
+    }
+    @media (max-width: 600px) {
+      .meal {
+        width: 45%;
+      }
+      #ingredient-search input {
+        width: 60vw;
+      }
+    }
+    @media (max-width: 360px) {
+      .meal {
+        width: 100%;
+      }
+      #ingredient-search input {
+        width: 100%;
+        margin-bottom: 8px;
+      }
     }
   </style>
 </head>
@@ -144,18 +173,16 @@
     <h1>오늘 뭐 먹지?</h1>
     <a href="favorites.html" class="bookmark-link">❤ 즐겨찾기</a>
   </header>
-      
+
   <main>
     <section>
       <h2 class="section-title">🥘 오늘의 추천 레시피</h2>
-      <div id="ingredient-search">
-        <button id="randomBtn" style="padding: 10px 16px; background-color: #ffb84d; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px;">
-          🔄 랜덤 추천
-        </button>
-        <div id="today-meal"></div>
-      </div>
+      <div id="today-meal"></div>
+      <button id="randomBtn" style="margin-top: 12px; background-color:#ffb84d; border:none; padding: 10px 16px; color: white; border-radius: 5px; cursor: pointer;">
+        🔄 랜덤 추천 다시보기
+      </button>
     </section>
-    
+
     <section>
       <h2 class="section-title">🔍 재료로 레시피 찾기</h2>
       <div id="ingredient-search">
@@ -176,9 +203,9 @@
     </section>
   </main>
 
-  <div id="modal" class="hidden">
+  <div id="modal" class="hidden" aria-modal="true" role="dialog" tabindex="-1">
     <div id="modal-content"></div>
-    <button onclick="closeModal()">닫기</button>
+    <button id="closeModalBtn" style="margin-top: 10px; padding: 8px 14px; border:none; background-color:#ffb84d; color:white; border-radius:5px; cursor:pointer;">닫기</button>
   </div>
 
   <script>
@@ -186,6 +213,7 @@
     const todayMealDiv = document.getElementById("today-meal");
     const modal = document.getElementById("modal");
     const modalContent = document.getElementById("modal-content");
+    const closeModalBtn = document.getElementById("closeModalBtn");
 
     let allMeals = [];
     let currentPage = 1;
@@ -223,9 +251,11 @@
 
       if (!data.meals) {
         mealList.innerHTML = "<p>해당 카테고리에 음식이 없습니다.</p>";
+        renderPagination();
         return;
       }
 
+      // 개별 상세정보도 함께 받아오기 (재료 등)
       const fetches = data.meals.map(item =>
         fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.idMeal}`)
           .then(res => res.json())
@@ -240,13 +270,18 @@
 
     async function searchByIngredient() {
       const inputEl = document.getElementById("ingredientInput");
-      const input = inputEl.value.trim();
-      if (!input) {
+      const inputRaw = inputEl.value.trim();
+      if (!inputRaw) {
         alert("재료를 입력해주세요!");
         return;
       }
 
-      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${input}`);
+      // 콤마로 분리해서 각각으로 필터링 (api는 1개 재료만 검색 가능하므로 여러 재료 모두 포함하는 필터링 직접 구현)
+      const ingredients = inputRaw.split(',').map(s => s.trim().toLowerCase());
+
+      // 첫 번째 재료로 API 호출 후, 그 결과에서 다중 재료 필터링
+      const firstIng = ingredients[0];
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${firstIng}`);
       const data = await res.json();
       inputEl.value = "";
       currentPage = 1;
@@ -254,16 +289,37 @@
 
       if (!data.meals) {
         mealList.innerHTML = "<p>해당 재료로 만든 음식을 찾을 수 없습니다.</p>";
+        renderPagination();
         return;
       }
 
+      // 상세정보 다 받아와서 재료 필터링
       const fetches = data.meals.map(item =>
         fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${item.idMeal}`)
           .then(res => res.json())
           .then(json => json.meals[0])
       );
 
-      allMeals = await Promise.all(fetches);
+      const detailedMeals = await Promise.all(fetches);
+
+      // 다중 재료 포함하는지 체크
+      allMeals = detailedMeals.filter(meal => {
+        if (!meal) return false;
+        // meal.strIngredient1~20 중에 ingredients 배열 내 모든 재료가 포함되어야 함
+        const mealIngs = [];
+        for(let i=1; i<=20; i++) {
+          const ing = meal[`strIngredient${i}`];
+          if(ing) mealIngs.push(ing.trim().toLowerCase());
+        }
+        return ingredients.every(ing => mealIngs.includes(ing));
+      });
+
+      if (allMeals.length === 0) {
+        mealList.innerHTML = "<p>해당 재료들을 모두 포함하는 음식이 없습니다.</p>";
+        renderPagination();
+        return;
+      }
+
       renderMeals();
       renderPagination();
     }
@@ -274,7 +330,7 @@
       const end = start + mealsPerPage;
       const slice = allMeals.slice(start, end);
 
-      if(slice.length === 0){
+      if (slice.length === 0) {
         mealList.innerHTML = "<p>음식이 없습니다.</p>";
         return;
       }
@@ -287,16 +343,17 @@
       pagination.innerHTML = "";
       const totalPages = Math.ceil(allMeals.length / mealsPerPage);
 
-      if(totalPages <= 1) return;
+      if (totalPages <= 1) return;
 
-      for(let i=1; i<=totalPages; i++){
+      for (let i = 1; i <= totalPages; i++) {
         const btn = document.createElement("button");
         btn.textContent = i;
-        if(i === currentPage) btn.style.fontWeight = "bold";
+        btn.classList.toggle("active", i === currentPage);
         btn.onclick = () => {
           currentPage = i;
           renderMeals();
           renderPagination();
+          window.scrollTo({top: 0, behavior: 'smooth'});
         };
         pagination.appendChild(btn);
       }
@@ -307,14 +364,15 @@
       div.className = "meal";
       const isFav = isFavorite(meal.idMeal);
       div.innerHTML = `
-        <img src="${meal.strMealThumb}" onclick="showDetails(${meal.idMeal})" />
+        <img src="${meal.strMealThumb}" alt="${meal.strMeal}" title="상세보기" />
         <h3>${meal.strMeal}</h3>
-        <button class="favorite ${isFav ? 'hearted' : ''}" data-id="${meal.idMeal}">
-          ${isFav ? "❤" : "🤍"}
+        <button class="favorite ${isFav ? 'hearted' : ''}" data-id="${meal.idMeal}" aria-label="즐겨찾기 토글">
+          ${isFav ? "❤️" : "🤍"}
         </button>
       `;
       const favBtn = div.querySelector(".favorite");
       favBtn.addEventListener("click", () => toggleFavorite(meal.idMeal, favBtn));
+      div.querySelector("img").addEventListener("click", () => showDetails(meal.idMeal));
       target.appendChild(div);
     }
 
@@ -325,101 +383,113 @@
         .split(/\r?\n|\r/)
         .filter(line => line.trim().length > 0);
 
+      // 재료 리스트 HTML
+      const ingredientsHTML = [...Array(20).keys()]
+        .map(i => {
+          const ing = meal[`strIngredient${i+1}`];
+          const measure = meal[`strMeasure${i+1}`];
+          if (ing && ing.trim() !== "") {
+            return `<li>${ing.trim()} - ${measure ? measure.trim() : ''}</li>`;
+          } else return "";
+        }).join("");
+
       modalContent.innerHTML = `
         <h2>${meal.strMeal}</h2>
-        <img src="${meal.strMealThumb}" width="200" />
+        <img src="${meal.strMealThumb}" width="100%" alt="${meal.strMeal}" style="border-radius:8px;"/>
         <p><strong>재료 목록:</strong></p>
-        <ul>
-          ${[...Array(20).keys()]
-            .map(i => meal[`strIngredient${i+1}`] ? `<li>${meal[`strIngredient${i+1}`]} - ${meal[`strMeasure${i+1}`]}</li>` : '')
-            .join('')}
-        </ul>
-        <button onclick="toggleInstructions()" style="margin-top:10px; padding:6px 12px; border:none; background-color:#ffb84d; color:white; border-radius:5px; cursor:pointer;">
+        <ul>${ingredientsHTML}</ul>
+        <button id="toggleInstructionsBtn" style="margin-top:10px; padding:6px 12px; border:none; background-color:#ffb84d; color:white; border-radius:5px; cursor:pointer;">
           📖 조리법 보기
         </button>
-        <ol id="instructions" class="hidden" style="margin-top:10px;">
-          ${instructionsArray.map(line => `<li>${line.trim()}</li>`).join('')}
-        </ol>
+        <ol id="instructionsList" style="display:none; margin-top: 12px;"></ol>
       `;
+
+      const toggleBtn = modalContent.querySelector("#toggleInstructionsBtn");
+      const instructionsList = modalContent.querySelector("#instructionsList");
+      toggleBtn.onclick = () => {
+        if (instructionsList.style.display === "none") {
+          instructionsList.innerHTML = instructionsArray.map(step => `<li>${step}</li>`).join("");
+          instructionsList.style.display = "block";
+          toggleBtn.textContent = "조리법 접기 ▲";
+        } else {
+          instructionsList.style.display = "none";
+          toggleBtn.textContent = "📖 조리법 보기";
+        }
+      };
+
       modal.classList.remove("hidden");
+      modal.focus();
     }
 
-    function toggleInstructions() {
-      const instr = document.getElementById("instructions");
-      if (instr) {
-        instr.classList.toggle("hidden");
-      }
-    }
-
-    function closeModal() {
+    closeModalBtn.onclick = () => {
       modal.classList.add("hidden");
-    }
+    };
 
-    window.addEventListener("click", function(e) {
-      if (e.target === modal) closeModal();
-    });
-
-    function toggleFavorite(id, button) {
-      let favs = getFavorites();
-      const index = favs.indexOf(id);
-      const isAdding = index === -1;
-
-      if (isAdding) {
-        favs.push(id);
-      } else {
-        favs.splice(index, 1);
+    window.onclick = e => {
+      if (e.target === modal) {
+        modal.classList.add("hidden");
       }
-
-      saveFavorites(favs);
-      showTodayMeal();
-
-      if (button) {
-        button.classList.toggle("hearted", isAdding);
-        button.innerHTML = isAdding ? "❤" : "🤍";
-      }
-    }
+    };
 
     function isFavorite(id) {
-      const favs = getFavorites().map(String);
-      return favs.includes(String(id));
+      const favs = getFavorites();
+      return favs.includes(id);
     }
 
-    async function showTodayMeal() {
-      const today = new Date().toDateString();
-      const savedDate = localStorage.getItem("lastDate");
-      let mealId = localStorage.getItem("todayMeal");
-
-      if (today !== savedDate) {
-        const favs = getFavorites();
-        if (favs.length > 0) {
-          mealId = favs[Math.floor(Math.random() * favs.length)];
-          localStorage.setItem("todayMeal", mealId);
-          localStorage.setItem("lastDate", today);
-        } else {
-          mealId = null;
-          localStorage.removeItem("todayMeal");
-          localStorage.removeItem("lastDate");
-        }
-      }
-
-      todayMealDiv.innerHTML = "";
-
-      if (mealId) {
-        const res = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${mealId}`);
-        const meal = (await res.json()).meals[0];
-        displayMeal(meal, todayMealDiv);
+    function toggleFavorite(id, btn) {
+      const favs = getFavorites();
+      if (favs.includes(id)) {
+        const idx = favs.indexOf(id);
+        favs.splice(idx, 1);
+        btn.classList.remove("hearted");
+        btn.textContent = "🤍";
       } else {
-        todayMealDiv.textContent = "즐겨찾기된 음식이 없습니다.";
+        favs.push(id);
+        btn.classList.add("hearted");
+        btn.textContent = "❤️";
       }
+      saveFavorites(favs);
+      renderTodayMeal();
     }
 
-    document.getElementById("searchBtn").addEventListener("click", searchByIngredient);
-    document.getElementById("randomBtn").addEventListener("click", showTodayMeal);
+    function renderTodayMeal() {
+      const favs = getFavorites();
+      if (favs.length === 0) {
+        todayMealDiv.innerHTML = "<p>즐겨찾기된 음식이 없습니다. 즐겨찾기 기능을 사용해 보세요!</p>";
+        return;
+      }
+      // 즐겨찾기 중 랜덤 1개
+      const randId = favs[Math.floor(Math.random() * favs.length)];
 
-    window.onload = () => {
-      loadCategories();
-      showTodayMeal();
-    };
+      fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${randId}`)
+        .then(res => res.json())
+        .then(data => {
+          const meal = data.meals[0];
+          todayMealDiv.innerHTML = `
+            <div class="meal" style="max-width: 300px; margin:auto; cursor:pointer;">
+              <img src="${meal.strMealThumb}" alt="${meal.strMeal}" />
+              <h3>${meal.strMeal}</h3>
+            </div>
+          `;
+          todayMealDiv.querySelector(".meal").onclick = () => showDetails(meal.idMeal);
+        });
+    }
+
+    // 랜덤 추천 다시보기 버튼
+    document.getElementById("randomBtn").onclick = renderTodayMeal;
+
+    // 검색 버튼
+    document.getElementById("searchBtn").onclick = searchByIngredient;
+
+    // 최초 실행 시 모든 카테고리 로드
+    loadCategories();
+
+    // 기본적으로 'Beef' 카테고리 음식 보여주기 (처음에 데이터 안 비어보이도록)
+    fetchMealsByCategory("Beef");
+
+    // 오늘 추천 음식 렌더링
+    renderTodayMeal();
+
   </script>
 </body>
 </html>
