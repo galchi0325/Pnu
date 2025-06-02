@@ -104,7 +104,7 @@ async function showDetails(id) {
 
     modalContent.innerHTML = `
       <h2>${meal.strMeal}</h2>
-      <img src="${meal.strMealThumb}" width="200">
+      <img src="${meal.strMealThumb}" width="200" />
       <p><strong>Ingredients:</strong></p>
       <ul>
         ${[...Array(20).keys()]
@@ -112,16 +112,19 @@ async function showDetails(id) {
           .join('')}
       </ul>
 
-    <button onclick="toggleInstructions()" class="button-primary">
-      📖 조리법 보기
-    </button>
+      <button onclick="toggleInstructions()" class="button-primary" style="margin-top: 10px;">
+        📖 조리법 보기
+      </button>
 
       ${meal.strYoutube ? `
-    <button onclick="window.open('${meal.strYoutube}', '_blank')" class="button-danger">
-      ▶ 동영상 보기
-    </button>` : ''}
+        <button onclick="window.open('${meal.strYoutube}', '_blank')" class="button-danger" style="margin-left: 10px;">
+          ▶ 동영상 보기
+        </button>
+      ` : ''}
 
-    <img src="${meal.strMealThumb}" class="clickable-img" onclick="showDetails(${meal.idMeal})" />
+      <ol id="instructions" class="hidden" style="margin-top: 10px;">
+        ${cleanedInstructions}
+      </ol>
     `;
 
     modal.classList.remove("hidden");
@@ -131,6 +134,7 @@ async function showDetails(id) {
     alert("레시피 정보를 불러오는 데 실패했습니다.");
   }
 }
+
 
 function closeModal() {
   modal.classList.add("hidden");
