@@ -3,13 +3,29 @@
 <head>
 <style>
   ul{
-    list
+    list-style-type: none;
+  }
+  hidden{
+    visibility:hidden
+  }
+  hiddenHover:hover hidden{
+    display:block;
+    visibility:visible
   }
 </style>
 </head>
 <body>
   <ul>
-    
+    <li>abc</li>
+    <li>def</li>
+    <li id="hiddenHover">abc
+      <ul id="hidden">
+        <li>1</li>
+        <li>1</li>
+        <li>1</li>
+      </ul>
+    </li>
+    <li>def</li>
   </ul>
 </body>
 </html>
