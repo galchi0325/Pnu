@@ -1,0 +1,29 @@
+// HW2 - 202555357
+int nState = 1;
+int num1, num2, sum;
+
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  Serial.println("Enter 2 integers to add:");
+  while (Serial.available() == 0) {
+  }
+
+  num1 = Serial.parseInt();
+
+  while (Serial.available() == 0) {
+  }
+ 
+  num2 = Serial.parseInt();
+  sum = num1 + num2;
+
+  Serial.print(num1);
+  Serial.print(" + ");
+  Serial.print(num2);
+  Serial.print(" = ");
+  Serial.println(sum);
+
+  delay(1000);
+} 
