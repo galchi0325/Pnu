@@ -16,8 +16,9 @@ birthday1 <- "19980618"
 birthdayYear1 <- as.numeric(substr(birthday1,1,4))
 birthday2 <- "19901214"
 birthdayYear2 <- as.numeric(substr(birthday2,1,4))
-Age1 <- 2025-birthdayYear1
-Age2 <- 2025-birthdayYear2
+ThisYear <- as.numeric(format(Sys.Date(),%Y)
+Age1 <- ThisYear-birthdayYear1
+Age2 <- ThisYear-birthdayYear2
 Agelist <- c(Age1,Age2)
 AgeDifference <- max(Agelist)-min(Agelist)
 print("두사람의 나이 차이는 ")
