@@ -16,7 +16,7 @@ birthday1 <- "19980618"
 birthdayYear1 <- as.numeric(substr(birthday1,1,4))
 birthday2 <- "19901214"
 birthdayYear2 <- as.numeric(substr(birthday2,1,4))
-ThisYear <- as.numeric(format(Sys.Date(),%Y)
+ThisYear <- as.numeric(format(Sys.Date(),"%Y")
 Age1 <- ThisYear-birthdayYear1
 Age2 <- ThisYear-birthdayYear2
 Agelist <- c(Age1,Age2)
