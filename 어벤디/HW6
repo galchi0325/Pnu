@@ -1,0 +1,44 @@
+// 핀 설정
+const int ledPin1 = 2;     // 2번 핀 LED
+const int ledPin2 = 3;     // 3번 핀 LED
+const int potPin = A0;     // 가변저항 입력 (아날로그 핀)
+
+// LED 상태 저장 변수
+int ledState1 = LOW;
+int ledState2 = LOW;
+
+// 이전 시간 기록 변수
+unsigned long prevTime1 = 0;
+unsigned long prevTime2 = 0;
+
+void setup() {
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+}
+
+void loop() {
+  // 가변저항값 읽기 (0 ~ 1023)
+  int sensorValue = analogRead(potPin);
+
+  // 0.5초(500ms) ~ 1.5초(1500ms) 범위로 변환
+  //    아날로그 값이 클수록 → led1은 빨라지고(=짧은 주기), led2는 느려짐
+  unsigned long interval1 = map(sensorValue, 0, 1023, 1500, 500);
+  unsigned long interval2 = map(sensorValue, 0, 1023, 500, 1500);
+
+  // 현재 시간 저장
+  unsigned long currentTime = millis();
+
+  // LED1 (2번 핀) 제어
+  if (currentTime - prevTime1 >= interval1) {
+    ledState1 = !ledState1;            // ON ↔ OFF 토글
+    digitalWrite(ledPin1, ledState1);
+    prevTime1 = currentTime;           // 시간 갱신
+  }
+
+  // LED2 (3번 핀) 제어
+  if (currentTime - prevTime2 >= interval2) {
+    ledState2 = !ledState2;
+    digitalWrite(ledPin2, ledState2);
+    prevTime2 = currentTime;
+  }
+}
