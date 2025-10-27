@@ -2,7 +2,7 @@
 
 // 핀 번호 설정
 int ledPins[] = {2, 3, 4, 5}; // LED 핀 배열
-int photoPin = A0;           // 조도센서 핀 (A0)
+int photoPin = 56;           // 조도센서 핀 (A2)
 int ledCount = 4;            // LED 개수
 
 // 기준값
@@ -63,7 +63,7 @@ void loop() {
 #include <pitches.h> 
 
 // 핀 번호 설정
-int potPin = A1;       // 가변저항 핀 (A1)
+int potPin = 56;       // 가변저항 핀 (A2)
 int speakerPin = 8;    // 스피커 핀 (PWM 가능핀)
 
 // PITCHES.H 에 정의된 상수를 사용하여 9단계 음계 배열 생성
