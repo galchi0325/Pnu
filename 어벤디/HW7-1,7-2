@@ -60,7 +60,7 @@ void loop() {
 }
 // HW 7-2 
 
-#include "pitches.h" 
+#include <pitches.h> 
 
 // 핀 번호 설정
 int potPin = A1;       // 가변저항 핀 (A1)
