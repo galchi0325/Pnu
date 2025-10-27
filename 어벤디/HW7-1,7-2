@@ -58,24 +58,26 @@ void loop() {
 
   delay(100); // 0.1초 대기
 }
-// HW 7-2
+// HW 7-2 
+
+#include "pitches.h" 
 
 // 핀 번호 설정
 int potPin = A1;       // 가변저항 핀 (A1)
 int speakerPin = 8;    // 스피커 핀 (PWM 가능핀)
 
-// 음계 주파수 배열 (9단계: 무음, 도4~도5)
-// 인덱스: 0     1    2    3    4    5    6    7    8
-int frequencies[] = {
-  0,  // 무음
-  262, // 도 (C4)
-  294, // 레 (D4)
-  330, // 미 (E4)
-  349, // 파 (F4)
-  392, // 솔 (G4)
-  440, // 라 (A4)
-  494, // 시 (B4)
-  523  // 도 (C5)
+// PITCHES.H 에 정의된 상수를 사용하여 9단계 음계 배열 생성
+// (무음, 도4, 레4, 미4, 파4, 솔4, 라4, 시4, 도5)
+int scaleNotes[] = {
+  0,       // 레벨 0: 무음
+  NOTE_C4, // 레벨 1: 도
+  NOTE_D4, // 레벨 2: 레
+  NOTE_E4, // 레벨 3: 미
+  NOTE_F4, // 레벨 4: 파
+  NOTE_G4, // 레벨 5: 솔
+  NOTE_A4, // 레벨 6: 라
+  NOTE_B4, // 레벨 7: 시
+  NOTE_C5  // 레벨 8: 높은 도
 };
 
 int currentLevel = -1; // 현재 연주 중인 레벨을 저장
@@ -90,7 +92,7 @@ void loop() {
   int potValue = analogRead(potPin);
 
   // 2. 값을 9단계(0~8)로 매핑
-  int level = map(potValue, 0, 1024, 0, 9); // 0~1023 -> 0~8
+  int level = map(potValue, 0, 1024, 0, 9); 
 
   // 3. 시리얼 모니터에 값 출력
   Serial.print("Pot Value: ");
@@ -98,7 +100,8 @@ void loop() {
   Serial.print(", Level: ");
   Serial.print(level);
   Serial.print(", Frequency: ");
-  Serial.println(frequencies[level]);
+  // 배열 이름을 'scaleNotes'로 수정
+  Serial.println(scaleNotes[level]); 
 
   // 4. 레벨이 변경되었을 때만 스피커 제어
   if (level != currentLevel) {
@@ -108,11 +111,10 @@ void loop() {
       // 레벨이 0이면 '무음'
       noTone(speakerPin);
     } else {
-      // 0이 아니면 해당 주파수로 연주
-      tone(speakerPin, frequencies[level]);
+      // 배열 이름을 'scaleNotes'로 수정
+      tone(speakerPin, scaleNotes[level]);
     }
   }
 
   delay(50); // 0.05초 대기 (값 안정화)
 }
-
