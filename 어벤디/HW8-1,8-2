@@ -1,0 +1,68 @@
+// HW 8-2
+
+// I2C LCD 사용을 위한 라이브러리
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+
+// --- 센서 연결 핀 정의 ---
+const int lm35Pin = A1;  // LM35 온도 센서 Vout 핀
+const int cdsPin = A2;   // CDS 조도 센서 출력 핀
+
+// --- LCD 설정 ---
+// I2C 주소(0x27 또는 0x3F가 일반적), LCD 크기(16열 2행)
+LiquidCrystal_I2C lcd(0x27, 16, 2);  
+
+// --- 사용자 지정 문자 정의 (° 기호) ---
+// 5x8 픽셀 비트맵으로 '°' 모양을 정의합니다.
+byte degreeSymbol[8] = {
+  B00000,
+  B10111,
+  B01000,
+  B10000,
+  B01000,
+  B00111,
+  B00000,
+  B00000
+};
+
+void setup() {
+  // I2C 통신 시작
+  Wire.begin();
+  
+  // LCD 초기화 및 백라이트 켜기
+  lcd.init();
+  lcd.backlight();
+  lcd.createChar(0, degreeSymbol);
+}
+
+void loop() {
+  // --- 1. LM35 온도 센서 값 읽기 ---
+  int tempRaw = analogRead(lm35Pin);
+  float temperature = (tempRaw * 500.0) / 1023.0;
+
+  
+  // --- 2. CDS 조도 센서 값 읽기 ---
+  int lightRaw = analogRead(cdsPin);
+  float lightVoltage = lightRaw * (5.0 / 1023.0);
+
+  
+  // --- 3. LCD에 값 출력 ---
+  lcd.clear(); 
+  
+  // 첫 번째 줄 (Row 0) : 온도 출력
+  lcd.setCursor(0, 0); 
+  lcd.print("Temp: ");
+  lcd.print(temperature, 2); 
+  lcd.write(0); 
+  
+  lcd.print("C"); // 'C'는 이어서 출력
+  
+  // 두 번째 줄 (Row 1) : 조도(전압) 출력
+  lcd.setCursor(0, 1);
+  lcd.print("Light: ");
+  lcd.print(lightVoltage, 2);
+
+  
+  // --- 4. 1초 대기 ---
+  delay(1000); 
+}
