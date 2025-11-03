@@ -66,3 +66,129 @@ void loop() {
   // --- 4. 1초 대기 ---
   delay(1000); 
 }
+// HW 8-1
+// 4자리 7세그먼트와 카운터 제어
+
+// --- 핀 정의 ---
+// 7세그먼트 세그먼트 핀 (a, b, c, d, e, f, g, dp)
+const int segmentPins[8] = {2, 3, 4, 5, 6, 7, 8, 9};
+// 4자리 선택 핀 (자리 1, 2, 3, 4)
+const int digitPins[4] = {10, 11, 12, 13};
+// 버튼 핀
+const int buttonPin = A0;
+
+// --- 7세그먼트 숫자 패턴 (Common Cathode 기준) ---
+// dp, g, f, e, d, c, b, a 순서
+const byte digitPatterns[10] = {
+  B00111111, // 0
+  B00000110, // 1
+  B01011011, // 2
+  B01001111, // 3
+  B01100110, // 4
+  B01101101, // 5
+  B01111101, // 6
+  B00000111, // 7
+  B01111111, // 8
+  B01101111  // 9
+};
+
+// --- 변수 ---
+int counter = 0;              // 현재 카운터 값
+bool countUp = true;          // true: 상향, false: 하향
+int lastButtonState = HIGH;   // 이전 버튼 상태
+unsigned long lastPressTime = 0;  // 마지막 버튼 누른 시간
+unsigned long lastCountTime = 0;  // 마지막 카운트 변경 시간
+const unsigned long debounceDelay = 50;   // 디바운싱 딜레이 (50ms)
+const unsigned long countInterval = 1000; // 카운트 간격 (1초)
+
+void setup() {
+  // 세그먼트 핀을 출력으로 설정
+  for (int i = 0; i < 8; i++) {
+    pinMode(segmentPins[i], OUTPUT);
+  }
+  
+  // 자리 선택 핀을 출력으로 설정
+  for (int i = 0; i < 4; i++) {
+    pinMode(digitPins[i], OUTPUT);
+    digitalWrite(digitPins[i], LOW);  // 초기에는 모두 OFF
+  }
+  
+  // 버튼 핀을 입력으로 설정 (내부 풀업 저항 사용)
+  pinMode(buttonPin, INPUT_PULLUP);
+}
+
+void loop() {
+  unsigned long currentTime = millis();
+  
+  // --- 버튼 입력 처리 (방향 전환) ---
+  int buttonState = digitalRead(buttonPin);
+  
+  if (buttonState == LOW && lastButtonState == HIGH) {
+    // 디바운싱: 마지막 누른 시간에서 일정 시간 경과했는지 확인
+    if (currentTime - lastPressTime > debounceDelay) {
+      lastPressTime = currentTime;
+      
+      // 카운터 방향 전환
+      countUp = !countUp;
+    }
+  }
+  
+  lastButtonState = buttonState;
+  
+  // --- 자동 카운터 증감 (1초마다) ---
+  if (currentTime - lastCountTime >= countInterval) {
+    lastCountTime = currentTime;
+    
+    if (countUp) {
+      // 상향 카운터: 0 -> 999
+      counter++;
+      if (counter > 999) {
+        counter = 0;
+      }
+    } else {
+      // 하향 카운터: 999 -> 0
+      counter--;
+      if (counter < 0) {
+        counter = 999;
+      }
+    }
+  }
+  
+  // --- 7세그먼트 디스플레이 갱신 ---
+  display4DigitNumber(counter);
+}
+
+// 4자리 숫자를 7세그먼트에 표시하는 함수
+void display4DigitNumber(int number) {
+  // 각 자리 숫자 추출
+  int digit1 = number / 1000;           // 천의 자리
+  int digit2 = (number / 100) % 10;     // 백의 자리
+  int digit3 = (number / 10) % 10;      // 십의 자리
+  int digit4 = number % 10;             // 일의 자리
+  
+  int digits[4] = {digit1, digit2, digit3, digit4};
+  
+  // 각 자리를 순차적으로 점등 (멀티플렉싱)
+  for (int i = 0; i < 4; i++) {
+    // 현재 자리 선택
+    for (int j = 0; j < 4; j++) {
+      digitalWrite(digitPins[j], (j == i) ? HIGH : LOW);
+    }
+    
+    // 숫자 패턴 출력
+    displayDigit(digits[i]);
+    
+    // 짧은 지연 (눈에 보이지 않는 속도로 전환)
+    delay(5);
+  }
+}
+
+// 하나의 숫자를 7세그먼트에 표시하는 함수
+void displayDigit(int digit) {
+  byte pattern = digitPatterns[digit];
+  
+  // 각 세그먼트에 패턴 적용
+  for (int i = 0; i < 8; i++) {
+    digitalWrite(segmentPins[i], (pattern >> i) & 0x01);
+  }
+}
