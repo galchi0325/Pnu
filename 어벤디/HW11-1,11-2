@@ -1,0 +1,82 @@
+// 문제 1) 아래 동작을 하는 Sketch를 작성하라
+// 가속도 센서를 이용하여 두드리는 경우
+
+#include <Wire.h>
+#include <MPU6050.h>
+
+MPU6050 mpu;
+int ledPin = 13;
+int toggleCount = 0;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
+  Wire.begin();
+  mpu.initialize();
+  
+  if (!mpu.testConnection()) {
+    Serial.println("MPU6050 connection failed");
+    while(1);
+  }
+}
+
+void loop() {
+  int16_t ax, ay, az;
+  mpu.getAcceleration(&ax, &ay, &az);
+  
+  // 가속도 값의 크기 계산 (두드릴 때 큰 값)
+  int accel = sqrt(ax*ax + ay*ay + az*az);
+  
+  if (accel > 20000) {  // 임계값 설정 (두드릴 때)
+    digitalWrite(ledPin, HIGH);
+    toggleCount++;
+    Serial.println(toggleCount);
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+  delay(50);
+}
+
+// ================================================================
+
+// 문제 2) 아래 동작을 하는 Sketch를 작성하라
+// 가속도 센서를 흔드는 경우
+
+#include <Wire.h>
+#include <MPU6050.h>
+
+MPU6050 mpu;
+int ledPin = 13;
+int ledState = LOW;
+unsigned long lastShakeTime = 0;
+int toggleCount = 0;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
+  Wire.begin();
+  mpu.initialize();
+  
+  if (!mpu.testConnection()) {
+    Serial.println("MPU6050 connection failed");
+    while(1);
+  }
+}
+
+void loop() {
+  int16_t ax, ay, az;
+  mpu.getAcceleration(&ax, &ay, &az);
+  
+  // 가속도 값의 크기 계산
+  int accel = sqrt(ax*ax + ay*ay + az*az);
+  
+  // 흔들기 감지 (높은 임계값)
+  if (accel > 25000 && millis() - lastShakeTime > 500) {
+    ledState = !ledState;
+    digitalWrite(ledPin, ledState);
+    toggleCount++;
+    Serial.println(toggleCount);
+    lastShakeTime = millis();
+  }
+  delay(50);
+}
